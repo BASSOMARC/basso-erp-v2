@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { sb } from '@/lib/supabase';
-const HOME: Record<string, string> = { admin: '/dashboard', secretaria: '/dashboard', jefe: '/fichaje', cliente: '/login' };
+const HOME: Record<string, string> = { admin: '/dashboard', secretaria: '/dashboard', jefe: '/fichaje', cliente: '/portal' };
 export default function Home() {
   const router = useRouter();
   useEffect(() => { (async () => {

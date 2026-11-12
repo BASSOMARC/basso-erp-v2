@@ -8,12 +8,13 @@ const NAV: Record<string, [string, string][]> = {
   admin: [['/dashboard', 'Resumen'], ['/calendario', 'Calendario'], ['/validar', 'Validar'], ['/horas', 'Control de horas'], ['/bitacora', 'Bitácora'], ['/incidencias', 'Incidencias'], ['/clientes', 'Clientes'], ['/trabajadores', 'Trabajadores'], ['/proyectos', 'Proyectos'], ['/planificar', 'Planificar'], ['/fichaje', 'Fichaje'], ['/costes', 'Costes y tarifas'], ['/rentabilidad', 'Rentabilidad']],
   secretaria: [['/dashboard', 'Resumen'], ['/calendario', 'Calendario'], ['/clientes', 'Clientes'], ['/trabajadores', 'Trabajadores'], ['/proyectos', 'Proyectos'], ['/planificar', 'Planificar'], ['/horas', 'Horas'], ['/bitacora', 'Bitácora'], ['/incidencias', 'Incidencias']],
   jefe: [['/fichaje', 'Mis jornadas']],
-  cliente: [],
+  cliente: [['/portal', 'Espace client']],
 };
 export default function Shell({ roles, children }: { roles: string[]; children: (p: Perfil) => React.ReactNode }) {
   const [perfil, setPerfil] = useState<Perfil | null>(null);
   const [err, setErr] = useState('');
   const router = useRouter(); const path = usePathname();
+  const fr = perfil?.rol === 'cliente';
   useEffect(() => {
     (async () => {
       const { data: { session } } = await sb.auth.getSession();
@@ -30,7 +31,7 @@ export default function Shell({ roles, children }: { roles: string[]; children: 
     <div className="topbar">
       <div className="brand"><img src={LOGO} alt="Basso" /> Basso Services Viticoles</div>
       <div className="nav">{(NAV[perfil.rol] || []).map(([h, t]) => <Link key={h} href={h} className={path === h ? 'active' : ''}>{t}</Link>)}</div>
-      <div className="who">{perfil.nombre} · {perfil.rol}<button className="btn" onClick={async () => { const n = prompt('Nueva contraseña (mínimo 10 caracteres):'); if (!n) return; if (n.length < 10) { alert('Demasiado corta'); return; } const { error } = await sb.auth.updateUser({ password: n }); alert(error ? 'No se pudo cambiar: ' + error.message : 'Contraseña cambiada ✔'); }}>Cambiar contraseña</button><button className="btn" onClick={async () => { await sb.auth.signOut(); router.replace('/login'); }}>Salir</button></div>
+      <div className="who">{perfil.nombre}{fr ? '' : ' · ' + perfil.rol}<button className="btn" onClick={async () => { const n = prompt(fr ? 'Nouveau mot de passe (10 caractères minimum) :' : 'Nueva contraseña (mínimo 10 caracteres):'); if (!n) return; if (n.length < 10) { alert(fr ? 'Trop court' : 'Demasiado corta'); return; } const { error } = await sb.auth.updateUser({ password: n }); alert(error ? (fr ? 'Échec : ' : 'No se pudo cambiar: ') + error.message : (fr ? 'Mot de passe modifié ✔' : 'Contraseña cambiada ✔')); }}>{fr ? 'Changer le mot de passe' : 'Cambiar contraseña'}</button><button className="btn" onClick={async () => { await sb.auth.signOut(); router.replace('/login'); }}>{fr ? 'Déconnexion' : 'Salir'}</button></div>
     </div>
     <div className="content">{children(perfil)}</div>
   </>);
