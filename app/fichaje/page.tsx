@@ -108,7 +108,7 @@ function Jornada({ j, trabajadores, onChange }: any) {
       <tbody>{lineas.map((l, i) => (<tr key={l.trabajador_id} className={l.est === 'pend' ? 'pend' : ''}>
         <td>{l.nombre}{!l.asignado && <div className="muted">añadido por el jefe</div>}</td>
         <td><div className="row" style={{ gap: 4, flexWrap: 'nowrap' }}>
-          <button type="button" disabled={!editable} className={'btn btn-ok' + (l.est === 'pres' ? ' on' : '')} onClick={() => set(i, { est: 'pres', h: l.h || '8', funcion: vendimia ? (l.funcion || 'coupeur') : l.funcion })}>Presente</button>
+          <button type="button" disabled={!editable} className={'btn btn-ok' + (l.est === 'pres' ? ' on' : '')} onClick={() => set(i, { est: 'pres', h: l.h || '7', funcion: vendimia ? (l.funcion || 'coupeur') : l.funcion })}>Presente</button>
           <button type="button" disabled={!editable} className={'btn btn-no' + (l.est === 'aus' ? ' on' : '')} onClick={() => set(i, { est: 'aus' })}>Ausente</button></div></td>
         <td><input type="number" step="0.25" min="0" max="24" inputMode="decimal" disabled={!editable || l.est !== 'pres'} value={l.h} onChange={e => set(i, { h: e.target.value })} /></td>
         <td><input type="number" step="0.25" min="0" max="24" inputMode="decimal" disabled={!editable || l.est !== 'pres'} value={l.he} onChange={e => set(i, { he: e.target.value })} /></td>
@@ -118,7 +118,7 @@ function Jornada({ j, trabajadores, onChange }: any) {
     </table></div>
     {editable && <div className="row" style={{ marginTop: 8 }}>
       <div className="field"><select value={nuevo} onChange={e => setNuevo(e.target.value)}><option value="">+ Añadir otro trabajador (sustitución)…</option>{disponibles.map((t: any) => <option key={t.id} value={t.id}>{t.nombre}</option>)}</select></div>
-      <button className="btn" disabled={!nuevo} onClick={() => { const t = trabajadores.find((x: any) => x.id === nuevo); setLineas(ls => [...ls, { trabajador_id: t.id, nombre: t.nombre, h: '8', he: '', est: 'pres', aus: false, funcion: vendimia ? 'coupeur' : null, asignado: false } as any]); setNuevo(''); }}>Añadir</button>
+      <button className="btn" disabled={!nuevo} onClick={() => { const t = trabajadores.find((x: any) => x.id === nuevo); setLineas(ls => [...ls, { trabajador_id: t.id, nombre: t.nombre, h: '7', he: '', est: 'pres', aus: false, funcion: vendimia ? 'coupeur' : null, asignado: false } as any]); setNuevo(''); }}>Añadir</button>
     </div>}
     <div className="row" style={{ marginTop: 10 }}>
       <div className="field" style={{ maxWidth: 200 }}><label>{porUnidad ? (modalidad === 'cepa' ? 'Total de cepas realizadas (equipo) *' : 'Total de kg realizados (equipo) *') : 'Cantidad realizada (opcional)'}</label>
