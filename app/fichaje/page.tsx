@@ -103,19 +103,18 @@ function Jornada({ j, trabajadores, onChange }: any) {
     {msg && <div className={'msg ' + msg.t} style={{ marginTop: 8 }}>{msg.m}</div>}
     {!editable && <div className="muted" style={{ margin: '8px 0' }}>Jornada validada: para corregirla, un administrador usa «Control de horas».</div>}
     {editable && pend > 0 && <div className="muted" style={{ margin: '8px 0' }}>Confirma uno por uno si cada trabajador asignado ha venido.</div>}
-    <div style={{ overflowX: 'auto' }}><table>
-      <thead><tr><th>Trabajador</th><th>Asistencia</th><th>Horas</th><th>Extra</th>{vendimia && <th>P/C</th>}<th></th></tr></thead>
-      <tbody>{lineas.map((l, i) => (<tr key={l.trabajador_id} className={l.est === 'pend' ? 'pend' : ''}>
-        <td>{l.nombre}{!l.asignado && <div className="muted">añadido por el jefe</div>}</td>
-        <td><div className="row" style={{ gap: 4, flexWrap: 'nowrap' }}>
-          <button type="button" disabled={!editable} className={'btn btn-ok' + (l.est === 'pres' ? ' on' : '')} onClick={() => set(i, { est: 'pres', h: l.h || '7', funcion: vendimia ? (l.funcion || 'coupeur') : l.funcion })}>Presente</button>
-          <button type="button" disabled={!editable} className={'btn btn-no' + (l.est === 'aus' ? ' on' : '')} onClick={() => set(i, { est: 'aus' })}>Ausente</button></div></td>
-        <td><input type="number" step="0.25" min="0" max="24" inputMode="decimal" disabled={!editable || l.est !== 'pres'} value={l.h} onChange={e => set(i, { h: e.target.value })} /></td>
-        <td><input type="number" step="0.25" min="0" max="24" inputMode="decimal" disabled={!editable || l.est !== 'pres'} value={l.he} onChange={e => set(i, { he: e.target.value })} /></td>
-        {vendimia && <td><button type="button" disabled={!editable || l.est !== 'pres'} className={'btn btn-p' + (l.funcion === 'porteur' ? ' on' : '')} title="Porteur" onClick={() => set(i, { funcion: l.funcion === 'porteur' ? 'coupeur' : 'porteur' })}>{l.funcion === 'porteur' ? 'P' : 'C'}</button></td>}
-        <td>{editable && !l.asignado && <button className="btn" onClick={() => quitar(i)}>Quitar</button>}</td>
-      </tr>))}</tbody>
-    </table></div>
+    <div>{lineas.map((l, i) => (<div key={l.trabajador_id} className={'wrow' + (l.est === 'pend' ? ' pend' : '')}>
+      <div className="wname">{l.nombre}{!l.asignado && <span className="muted"> · añadido por el jefe</span>}{editable && !l.asignado && <button className="btn" style={{ marginLeft: 8 }} onClick={() => quitar(i)}>Quitar</button>}</div>
+      <div className="wbtns">
+        <button type="button" disabled={!editable} className={'btn btn-ok' + (l.est === 'pres' ? ' on' : '')} onClick={() => set(i, { est: 'pres', h: l.h || '7', funcion: vendimia ? (l.funcion || 'coupeur') : l.funcion })}>✓ Presente</button>
+        <button type="button" disabled={!editable} className={'btn btn-no' + (l.est === 'aus' ? ' on' : '')} onClick={() => set(i, { est: 'aus' })}>✗ Ausente</button>
+      </div>
+      <div className="wnums">
+        <div><label>Horas</label><input type="number" step="0.25" min="0" max="24" inputMode="decimal" disabled={!editable || l.est !== 'pres'} value={l.h} onChange={e => set(i, { h: e.target.value })} /></div>
+        <div><label>Extra</label><input type="number" step="0.25" min="0" max="24" inputMode="decimal" disabled={!editable || l.est !== 'pres'} value={l.he} onChange={e => set(i, { he: e.target.value })} /></div>
+        {vendimia && <div><label>Función</label><button type="button" disabled={!editable || l.est !== 'pres'} className={'btn btn-p' + (l.funcion === 'porteur' ? ' on' : '')} title="Porteur" onClick={() => set(i, { funcion: l.funcion === 'porteur' ? 'coupeur' : 'porteur' })}>{l.funcion === 'porteur' ? 'Porteur' : 'Cortador'}</button></div>}
+      </div>
+    </div>))}</div>
     {editable && <div className="row" style={{ marginTop: 8 }}>
       <div className="field"><select value={nuevo} onChange={e => setNuevo(e.target.value)}><option value="">+ Añadir otro trabajador (sustitución)…</option>{disponibles.map((t: any) => <option key={t.id} value={t.id}>{t.nombre}</option>)}</select></div>
       <button className="btn" disabled={!nuevo} onClick={() => { const t = trabajadores.find((x: any) => x.id === nuevo); setLineas(ls => [...ls, { trabajador_id: t.id, nombre: t.nombre, h: '7', he: '', est: 'pres', aus: false, funcion: vendimia ? 'coupeur' : null, asignado: false } as any]); setNuevo(''); }}>Añadir</button>
@@ -130,8 +129,8 @@ function Jornada({ j, trabajadores, onChange }: any) {
       <textarea rows={2} maxLength={2000} disabled={!editable} value={obs} onChange={e => setObs(e.target.value)} placeholder="Ej. parcela terminada, falta la fila 12, material en mal estado…" /></div>
     <Incidencias j={j} lineas={lineas} editable={editable} />
     {editable && <div className="row" style={{ marginTop: 12 }}>
-      <button className="btn" disabled={busy} onClick={guardar}>Guardar</button>
-      {j.estado === 'planificada' && <button className="btn btn-g" disabled={busy} onClick={fichar}>Fichar jornada</button>}
+      <button className="btn btn-lg" disabled={busy} onClick={guardar}>Guardar</button>
+      {j.estado === 'planificada' && <button className="btn btn-g btn-lg" disabled={busy} onClick={fichar}>Fichar jornada</button>}
       {j.estado === 'fichada' && <span className="muted">Fichada. Si corriges algo, pulsa Guardar.</span>}
     </div>}
   </div>);

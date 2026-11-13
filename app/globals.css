@@ -60,7 +60,28 @@ a.kpi:hover{background:var(--goldl)}
 .chip.on{background:var(--g);color:#fff;border-color:var(--g)}.chip.oc:not(.on){border-color:var(--a);background:var(--al)}.chip i{font-style:normal;font-size:10px;opacity:.8}
 .chip input{display:none}
 .jrow{padding:10px 0;border-bottom:1px solid var(--border)}.jrow:last-child{border-bottom:none}
-.pend{background:var(--al)}
+.pend,.wrow.pend{background:var(--al)}
 .btn-ok{background:var(--okl);color:var(--ok);border-color:var(--ok);font-weight:600}.btn-ok.on{background:var(--ok);color:#fff}
 .btn-no{background:var(--rl);color:#791F1F;border-color:var(--r);font-weight:600}.btn-no.on{background:var(--r);color:#fff}
 .inc{padding:6px 10px;border-left:3px solid var(--a);background:var(--al);border-radius:4px;margin-bottom:6px;font-size:12px}.inc.res{border-color:var(--ok);background:var(--okl)}
+
+/* fichaje: una tarjeta por trabajador, cómoda en móvil */
+.wrow{border:1px solid var(--border);border-radius:var(--radius-lg);padding:10px 12px;margin-bottom:8px;display:grid;gap:8px;background:var(--bg)}
+.wname{font-size:15px;font-weight:600}
+.wbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.wbtns .btn{min-height:46px;font-size:15px;font-weight:600}
+.wnums{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.wnums>div{flex:1;min-width:90px;max-width:160px}
+.wnums input{min-height:42px;font-size:16px}
+.wnums .btn{width:100%;min-height:42px;font-size:14px}
+.btn-lg{min-height:46px;padding:10px 20px;font-size:15px;font-weight:600}
+@media(min-width:900px){.wrow{grid-template-columns:1.2fr 1.4fr 1.6fr;align-items:center}}
+
+.navg{position:relative}
+.navg summary{list-style:none;cursor:pointer;color:rgba(255,255,255,.8);padding:6px 12px;border-radius:var(--radius);font-size:13px;border:1px solid transparent;user-select:none}
+.navg summary::-webkit-details-marker{display:none}
+.navg.active summary,.navg[open] summary{background:rgba(255,255,255,.18);color:#fff;border-color:var(--gold)}
+.navmenu{position:absolute;top:100%;left:0;margin-top:4px;background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius);box-shadow:0 8px 24px rgba(0,0,0,.2);min-width:180px;z-index:50;padding:4px;display:flex;flex-direction:column}
+.navmenu a{color:var(--text)!important;padding:10px 12px;border-radius:6px;font-size:14px}
+.navmenu a:hover{background:var(--bg3)}.navmenu a.active{background:var(--gl);color:var(--g)!important;border-color:transparent;font-weight:600}
+@media(max-width:640px){.navmenu{position:fixed;left:8px;right:8px;top:auto}.topbar .brand{font-size:14px}}
