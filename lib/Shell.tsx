@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { sb, Perfil } from './supabase';
-import { useT, aplicarIdioma, cambiarIdioma } from './i18n';
+import { useT, aplicarIdioma, cambiarIdioma, tr } from './i18n';
 export const LOGO = 'https://i.postimg.cc/bvDHmp47/WhatsApp-Image-2026-05-14-at-17-24-20-(6).jpg';
 const NAV: Record<string, [string, string, string?][]> = {
   admin: [['/dashboard', 'Resumen'], ['/calendario', 'Calendario'], ['/planificar', 'Planificar'], ['/fichaje', 'Fichaje'], ['/validar', 'Validar'], ['/horas', 'Control de horas'],
@@ -17,7 +17,8 @@ export default function Shell({ roles, children }: { roles: string[]; children: 
   const [perfil, setPerfil] = useState<Perfil | null>(null);
   const [err, setErr] = useState('');
   const router = useRouter(); const path = usePathname();
-  const { lang, t } = useT();
+  const { lang, t: t0 } = useT();
+  const t = (k: string) => (perfil && perfil.rol !== 'jefe' && perfil.rol !== 'cliente') ? tr('es', k) : t0(k);
   const fr = perfil?.rol === 'cliente' || (perfil?.rol === 'jefe' && lang === 'fr');
   useEffect(() => {
     (async () => {
@@ -42,7 +43,7 @@ export default function Shell({ roles, children }: { roles: string[]; children: 
           return (<details key={g + path} className={'navg' + (act ? ' active' : '')}><summary>{g} ▾</summary><div className="navmenu">{items.map(([h, tx]) => <Link key={h} href={h} className={path === h ? 'active' : ''}>{tx}</Link>)}</div></details>);
         })}
       </div>
-      <div className="who">{perfil.rol === 'jefe' && <span className="lang"><button className={lang === 'es' ? 'on' : ''} onClick={() => cambiarIdioma('es')}>ES</button><button className={lang === 'fr' ? 'on' : ''} onClick={() => cambiarIdioma('fr')}>FR</button></span>}{perfil.nombre}{fr ? '' : ' · ' + perfil.rol}<button className="btn" onClick={async () => { const n = prompt(t('pwdPrompt')); if (!n) return; if (n.length < 10) { alert(t('pwdShort')); return; } const { error } = await sb.auth.updateUser({ password: n }); alert(error ? t('pwdFail') + error.message : t('pwdOk')); }}>{t('changePwd')}</button><button className="btn" onClick={async () => { await sb.auth.signOut(); router.replace('/login'); }}>{t('logout')}</button></div>
+      <div className="who">{(perfil.rol === 'jefe' || path.startsWith('/fichaje')) && <span className="lang"><button className={lang === 'es' ? 'on' : ''} onClick={() => cambiarIdioma('es')}>ES</button><button className={lang === 'fr' ? 'on' : ''} onClick={() => cambiarIdioma('fr')}>FR</button></span>}{perfil.nombre}{fr ? '' : ' · ' + perfil.rol}<button className="btn" onClick={async () => { const n = prompt(t('pwdPrompt')); if (!n) return; if (n.length < 10) { alert(t('pwdShort')); return; } const { error } = await sb.auth.updateUser({ password: n }); alert(error ? t('pwdFail') + error.message : t('pwdOk')); }}>{t('changePwd')}</button><button className="btn" onClick={async () => { await sb.auth.signOut(); router.replace('/login'); }}>{t('logout')}</button></div>
     </div>
     <div className="content">{children(perfil)}</div>
   </>);

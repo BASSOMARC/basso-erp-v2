@@ -12,6 +12,7 @@ export default function Login() {
     const { error } = await sb.auth.signInWithPassword({ email: email.trim(), password: pass });
     setBusy(false);
     if (error) { setErr(t('badLogin')); return; }
+    await cambiarIdioma(lang);
     router.replace('/');
   }
   return (<div className="login-page"><form className="login-box" onSubmit={entrar}>
