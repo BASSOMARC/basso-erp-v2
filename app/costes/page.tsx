@@ -9,6 +9,44 @@ const UNI: Record<string, string> = { hora: '€ / hora', cepa: '€ / cepa', kg
 const eur = (n: number) => Number(n).toLocaleString('es', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
 const fd = (f: string) => new Date(f + 'T00:00').toLocaleDateString('es');
 
+function Matriz({ clientes, servicios, tarifas, onSaved }: { clientes: any[]; servicios: any[]; tarifas: any[]; onSaved: () => void }) {
+  const [cli, setCli] = useState(''); const [desde, setDesde] = useState(hoy()); const [vals, setVals] = useState<Record<string, string>>({});
+  const [msg, setMsg] = useState<Msg>(null); const [busy, setBusy] = useState(false);
+  const UNIS = ['hora', 'cepa', 'kg'];
+  const filas = [{ nombre: '*', etiqueta: 'Cualquier servicio (precio general del cliente)' }, ...servicios.map((x: any) => ({ nombre: x.nombre, etiqueta: x.nombre }))];
+  const actual = (serv: string, uni: string) => tarifas.filter(t => (t.cliente_id || '') === cli && t.servicio === serv && t.unidad === uni && t.desde <= hoy()).sort((a: any, b: any) => b.desde.localeCompare(a.desde))[0];
+  const num = (v: string) => Number(String(v).replace(',', '.'));
+  const cambios = Object.entries(vals).filter(([k, v]) => { if (v.trim() === '') return false; const [serv, uni] = k.split('||'); const a = actual(serv, uni); return !(a && Number(a.precio) === num(v)); });
+  async function guardar() {
+    if (!cli) { setMsg({ t: 'err', m: 'Elige un cliente' }); return; }
+    for (const [, v] of cambios) if (!(num(v) >= 0)) { setMsg({ t: 'err', m: 'Hay un precio no válido' }); return; }
+    if (!confirm(`¿Guardar ${cambios.length} precio(s) para ${clientes.find(c => c.id === cli)?.nombre}, válidos desde ${desde}?`)) return;
+    setBusy(true); setMsg(null); let ok = 0; const fallos: string[] = [];
+    for (const [k, v] of cambios) {
+      const [serv, uni] = k.split('||'); const precio = num(v);
+      const { data, error } = await sb.from('tarifas').insert({ cliente_id: cli, servicio: serv, unidad: uni, precio, desde }).select('*').single();
+      if (error) fallos.push(`${serv === '*' ? 'General' : serv} (${UNI[uni]}): ${error.message.includes('duplicate') ? 'ya hay un precio con esa fecha, usa otra fecha' : error.message}`);
+      else if (!data || Number(data.precio) !== precio || data.unidad !== uni || data.servicio !== serv) fallos.push(`${serv} (${UNI[uni]}): el servidor devolvió otros valores`);
+      else ok++;
+    }
+    setBusy(false); setVals({}); onSaved();
+    setMsg(fallos.length ? { t: 'err', m: `${ok} guardado(s). Fallaron: ${fallos.join(' · ')}` } : { t: 'ok', m: `${ok} precio(s) guardados y verificados ✔` });
+  }
+  return (<div className="card"><h3>Precios negociados por cliente</h3>
+    <div className="muted" style={{ marginBottom: 8 }}>Elige un cliente y escribe sus precios: €/hora, €/cepa o €/kg por servicio. Solo se guardan las casillas que cambies. Para un cliente puedes poner un precio general y después precios específicos de algún servicio (el específico manda). La facturación sigue en Artimove: esto sirve para calcular el margen.</div>
+    {msg && <div className={'msg ' + msg.t}>{msg.m}</div>}
+    <div className="row">
+      <div className="field" style={{ maxWidth: 300 }}><label>Cliente</label><select value={cli} onChange={e => { setCli(e.target.value); setVals({}); setMsg(null); }}><option value="">— elige —</option>{clientes.map(x => <option key={x.id} value={x.id}>{x.nombre}</option>)}</select></div>
+      <div className="field" style={{ maxWidth: 170 }}><label>Precios válidos desde</label><input type="date" value={desde} onChange={e => setDesde(e.target.value)} /></div>
+      <button className="btn btn-g btn-lg" disabled={busy || !cli || cambios.length === 0} onClick={guardar}>Guardar {cambios.length || ''} precio{cambios.length === 1 ? '' : 's'}</button>
+    </div>
+    {cli && <div style={{ overflowX: 'auto', marginTop: 10 }}><table><thead><tr><th>Servicio</th>{UNIS.map(u => <th key={u}>{UNI[u]}</th>)}</tr></thead>
+      <tbody>{filas.map(f => (<tr key={f.nombre}><td>{f.etiqueta}</td>{UNIS.map(u => { const k = f.nombre + '||' + u; const a = actual(f.nombre, u); const v = vals[k]; const cambia = v !== undefined && v.trim() !== '' && !(a && Number(a.precio) === num(v));
+        return <td key={u}><input type="number" step="0.0001" min="0" inputMode="decimal" style={{ width: 96, borderColor: cambia ? 'var(--gold)' : undefined, background: cambia ? 'var(--goldl)' : undefined }} placeholder={a ? String(a.precio) : '—'} value={v ?? ''} onChange={e => setVals({ ...vals, [k]: e.target.value })} /><div className="muted" style={{ fontSize: 10 }}>{a ? 'ahora ' + eur(a.precio) + ' €' : ''}</div></td>; })}</tr>))}</tbody></table>
+      <div className="muted" style={{ marginTop: 6 }}>Las casillas en gris muestran el precio vigente hoy. Déjalas vacías si no cambian.</div></div>}
+  </div>);
+}
+
 function Contenido() {
   const [coste, setCoste] = useState<any[]>([]); const [prima, setPrima] = useState<any[]>([]); const [tarifas, setTarifas] = useState<any[]>([]);
   const [clientes, setClientes] = useState<any[]>([]); const [servicios, setServicios] = useState<any[]>([]); const [err, setErr] = useState('');
@@ -71,7 +109,9 @@ function Contenido() {
       {prima.length > 0 && <table style={{ marginTop: 10 }}><thead><tr><th>€/día</th><th>Desde</th></tr></thead><tbody>{prima.map(x => <tr key={x.id}><td>{eur(x.euros_dia)}</td><td>{fd(x.desde)}</td></tr>)}</tbody></table>}
     </div>
 
-    <div className="card"><h3>Tarifas de venta (lo que cobras al cliente)</h3>
+    <Matriz clientes={clientes} servicios={servicios} tarifas={tarifas} onSaved={cargar} />
+
+    <div className="card"><h3>Tarifas de venta · historial y alta individual</h3>
       <div className="muted" style={{ marginBottom: 8 }}>Para calcular el margen. La facturación sigue haciéndose en Artimove. Se usa la tarifa más específica: cliente + servicio, luego cliente (cualquier servicio), luego servicio general y por último la general.</div>
       {tm && <div className={'msg ' + tm.t}>{tm.m}</div>}
       <div className="row">
