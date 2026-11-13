@@ -73,12 +73,12 @@ function Hoja({ y, m, admin, trab, setTrab }: { y: number; m: number; admin: boo
         const h = Number(r.horas_normal) + Number(r.horas_extra); d.h += h;
         if (r.funcion === 'porteur') d.P = true;
         const ch = vig(cost.coste.filter((x: any) => x.tipo_trabajador === t.tipo), f); d.coste += h * Number(ch?.euros_hora || 0);
-        if (r.funcion === 'porteur') d.coste += Number(vig(cost.prima, f)?.euros_dia || 0);
       }
     });
+    Object.values(T).forEach((t: any) => Object.entries<any>(t.dia).forEach(([f, d]) => { d.plus = d.P && d.h > 0 ? Number(vig(cost.prima, f)?.euros_dia || 0) : 0; d.coste += d.plus; }));
     return Object.values(T).map((t: any) => {
-      let horas = 0, trabajados = 0, ausentes = 0, coste = 0, normales = 0, extra = 0;
-      dias.forEach(f => { const d = t.dia[f]; if (!d) return; if (d.h > 0) { horas += d.h; trabajados++; coste += d.coste; } else if (d.aus) ausentes++; });
+      let horas = 0, trabajados = 0, ausentes = 0, coste = 0, normales = 0, extra = 0, diasP = 0, plus = 0;
+      dias.forEach(f => { const d = t.dia[f]; if (!d) return; if (d.h > 0) { horas += d.h; trabajados++; coste += d.coste; if (d.P) { diasP++; plus += d.plus; } } else if (d.aus) ausentes++; });
       const sem: any[] = [];
       for (let w = ini; w < fin; w = suma(w, 7)) {
         let h = 0, dt = 0; for (let k = 0; k < 7; k++) { const d = t.dia[suma(w, k)]; if (d && d.h > 0) { h += d.h; dt++; } }
@@ -87,15 +87,15 @@ function Hoja({ y, m, admin, trab, setTrab }: { y: number; m: number; admin: boo
         const e = Math.max(0, h - SEM); sem.push({ w, dom, h, dt, n: Math.min(h, SEM), e, cuenta: mesDom });
         if (mesDom) { normales += Math.min(h, SEM); extra += e; }
       }
-      return { ...t, horas, trabajados, ausentes, coste, normales, extra, sem };
+      return { ...t, horas, trabajados, ausentes, coste, normales, extra, sem, diasP, plus };
     }).sort((p: any, q: any) => p.nombre.localeCompare(q.nombre));
   }, [rows, cost, y, m]);
 
   const lista = trab ? res.filter((r: any) => r.id === trab) : res;
   const tot = lista.reduce((s: any, r: any) => ({ h: s.h + r.horas, c: s.c + r.coste, e: s.e + r.extra }), { h: 0, c: 0, e: 0 });
   function csv() {
-    const L = [['Trabajador', 'Dias trabajados', 'Dias ausentes', 'Horas totales (dias del mes)', 'Horas normales (semanas que acaban en el mes)', 'Horas extra (semanas que acaban en el mes)', ...(admin ? ['Coste EUR'] : [])]];
-    lista.forEach((r: any) => L.push([r.nombre, r.trabajados, r.ausentes, r.horas, r.normales, r.extra, ...(admin ? [Math.round(r.coste * 100) / 100] : [])].map(String)));
+    const L = [['Trabajador', 'Dias trabajados', 'Dias ausentes', 'Horas totales (dias del mes)', 'Horas normales (semanas que acaban en el mes)', 'Horas extra (semanas que acaban en el mes)', 'Dias porteur', ...(admin ? ['Plus porteur EUR', 'Coste EUR'] : [])]];
+    lista.forEach((r: any) => L.push([r.nombre, r.trabajados, r.ausentes, r.horas, r.normales, r.extra, r.diasP, ...(admin ? [Math.round(r.plus * 100) / 100, Math.round(r.coste * 100) / 100] : [])].map(String)));
     const t = '﻿' + L.map(l => l.map(c => '"' + String(c).replace(/"/g, '""').replace(/\./g, ',') + '"').join(';')).join('\n');
     const el = document.createElement('a'); el.href = URL.createObjectURL(new Blob([t], { type: 'text/csv;charset=utf-8' })); el.download = `horas-${y}-${pad(m)}.csv`; el.click();
   }
@@ -114,16 +114,16 @@ function Hoja({ y, m, admin, trab, setTrab }: { y: number; m: number; admin: boo
         <table style={{ whiteSpace: 'nowrap' }}>
           <thead><tr><th style={{ position: 'sticky', left: 0, background: 'var(--bg)' }}>Trabajador</th>
             {dias.map(f => { const w = D(f).getUTCDay(); return <th key={f} style={{ textAlign: 'center', padding: '4px 3px', background: w === 0 || w === 6 ? 'var(--pl)' : undefined }}><div className="muted" style={{ fontSize: 10 }}>{LJ[w]}</div>{Number(f.slice(8))}</th>; })}
-            <th>Total h</th><th>Días trab.</th><th>Ausentes</th><th>Extra h</th>{admin && <th>Coste</th>}</tr></thead>
+            <th>Total h</th><th>Días trab.</th><th>Ausentes</th><th>Extra h</th><th>Días P</th>{admin && <th>Plus P</th>}{admin && <th>Coste</th>}</tr></thead>
           <tbody>
             {lista.map((r: any) => (<tr key={r.id} style={{ cursor: 'pointer' }} onClick={() => setTrab(trab === r.id ? '' : r.id)}>
               <td style={{ position: 'sticky', left: 0, background: 'var(--bg)' }}><b>{r.nombre}</b></td>
               {dias.map(f => { const d = r.dia[f]; const w = D(f).getUTCDay();
                 return <td key={f} style={{ textAlign: 'center', padding: '4px 3px', background: w === 0 || w === 6 ? 'var(--pl)' : undefined, color: d && d.h === 0 && d.aus ? 'var(--r)' : 'inherit' }}>
                   {d ? (d.h > 0 ? <>{f1(d.h)}{d.P && <sup>P</sup>}</> : d.aus ? 'A' : '') : ''}</td>; })}
-              <td><b>{f1(r.horas)}</b></td><td>{r.trabajados}</td><td>{r.ausentes}</td><td>{f1(r.extra)}</td>{admin && <td>{eur(r.coste)}</td>}
+              <td><b>{f1(r.horas)}</b></td><td>{r.trabajados}</td><td>{r.ausentes}</td><td>{f1(r.extra)}</td><td>{r.diasP || ''}</td>{admin && <td>{r.diasP ? eur(r.plus) : ''}</td>}{admin && <td>{eur(r.coste)}</td>}
             </tr>))}
-            {lista.length === 0 && <tr><td colSpan={nd + 6} className="muted">Sin horas este mes.</td></tr>}
+            {lista.length === 0 && <tr><td colSpan={nd + 8} className="muted">Sin horas este mes.</td></tr>}
           </tbody>
         </table>
         <div className="muted" style={{ marginTop: 6 }}>A = ausente · P = porteur · fines de semana en color. Pulsa una fila para ver solo a ese trabajador.</div>
@@ -132,7 +132,7 @@ function Hoja({ y, m, admin, trab, setTrab }: { y: number; m: number; admin: boo
         <h3 style={{ marginBottom: 6 }}>{sel.nombre} · desglose semanal</h3>
         <table><thead><tr><th>Semana (lun–dom)</th><th>Días</th><th>Horas</th><th>Normales (hasta {SEM})</th><th>Extra</th><th></th></tr></thead>
           <tbody>{sel.sem.map((s: any) => <tr key={s.w}><td>{s.w.slice(5)} → {s.dom.slice(5)}</td><td>{s.dt}</td><td>{f1(s.h)}</td><td>{f1(s.n)}</td><td style={{ color: s.e > 0 ? 'var(--r)' : 'inherit' }}>{f1(s.e)}</td><td className="muted">{s.cuenta ? '' : 'cuenta en el mes siguiente'}</td></tr>)}</tbody></table>
-        <div className="muted" style={{ marginTop: 6 }}>Total mes: {f1(sel.horas)} h · {sel.trabajados} días trabajados · {sel.ausentes} días ausentes · normales {f1(sel.normales)} h · extra {f1(sel.extra)} h</div>
+        <div className="muted" style={{ marginTop: 6 }}>Total mes: {f1(sel.horas)} h · {sel.trabajados} días trabajados · {sel.ausentes} días ausentes · normales {f1(sel.normales)} h · extra {f1(sel.extra)} h{sel.diasP ? ` · ${sel.diasP} días de porteur${admin ? ' (' + eur(sel.plus) + ')' : ''}` : ''}</div>
       </div>}
       <div className="muted">Las horas extra se calculan por semana natural (lunes a domingo): lo que pasa de {SEM} h es extra. Cuando una semana cruza dos meses, sus normales y extra se cuentan en el mes en que acaba la semana (domingo); confírmalo con quien haga las nóminas. «Horas del mes» suma los días del mes tal cual.</div>
     </>}
