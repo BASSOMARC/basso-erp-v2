@@ -105,3 +105,11 @@ a.kpi:hover{background:var(--goldl)}
 .sinfo{font-size:13px;margin-bottom:8px;font-weight:600}
 textarea{font-size:16px}
 @media(max-width:640px){.content{padding:10px 10px 90px}input,select{font-size:16px}}
+
+.lang{display:inline-flex;border:1px solid rgba(255,255,255,.5);border-radius:20px;overflow:hidden;margin-right:6px}
+.lang button{background:transparent;border:0;color:#fff;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer}
+.lang button.on{background:var(--gold);color:#3b2a00}
+.lang.dark{border-color:var(--border2)}.lang.dark button{color:var(--text2)}.lang.dark button.on{background:var(--g);color:#fff}
+.lang{flex:none;white-space:nowrap}
+.who{flex-wrap:wrap;justify-content:flex-end}
+@media(max-width:640px){.who{width:100%;justify-content:space-between}}

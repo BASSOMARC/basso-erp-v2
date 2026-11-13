@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 export const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
   auth: { persistSession: true, autoRefreshToken: true },
 });
-export type Perfil = { user_id: string; rol: 'admin'|'secretaria'|'jefe'|'cliente'; nombre: string; cliente_id: string|null };
+export type Perfil = { user_id: string; rol: 'admin'|'secretaria'|'jefe'|'cliente'; nombre: string; cliente_id: string|null; idioma?: 'es'|'fr' };
 export const hoy = () => new Date().toISOString().slice(0, 10);
 // Trae todas las filas de una consulta (la API corta en 1000 por petición)
 export async function todas(build: (a: number, b: number) => PromiseLike<{ data: any[] | null; error: any }>) {
