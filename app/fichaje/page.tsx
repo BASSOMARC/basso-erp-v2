@@ -2,7 +2,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import Shell from '@/lib/Shell';
 import { sb, Perfil } from '@/lib/supabase';
-import { useT } from '@/lib/i18n';
+import { useT, loc } from '@/lib/i18n';
 const hoy = () => new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
 const mas = (f: string, n: number) => new Date(new Date(f + 'T12:00').getTime() + n * 864e5).toISOString().slice(0, 10);
 
@@ -130,7 +130,7 @@ function Jornada({ j, trabajadores, onChange }: any) {
     </div>
     {proy && <div className="pbox"><div className="pn">📍 {t('project')}: <b>{proy.nombre}</b></div>
       {av && av.pct != null ? <><div className="pbar"><i style={{ width: Math.min(100, Number(av.pct)) + '%' }} /></div><div className="muted">{av.unidad === 'porcentaje' ? `${Number(av.pct).toLocaleString(lang)} %` : `${Number(av.avance).toLocaleString(lang)} / ${Number(av.objetivo).toLocaleString(lang)} ${av.unidad} · ${Number(av.pct).toLocaleString(lang)} %`} {t('doneSoFar')}</div></> : av ? <div className="muted">{Number(av.avance).toLocaleString(lang)} {av.unidad} {t('doneSoFar')}</div> : null}</div>}
-    {j.estado !== 'planificada' && <div className="msg ok" style={{ marginTop: 10 }}><b>{j.estado === 'validada' ? t('doneValidated') : t('doneSent')}</b> · {presentes} {presentes === 1 ? t('person') : t('people')} · {total} h{porUnidad && cant ? ` · ${Number(num(cant)).toLocaleString('es')} ${unidad}` : ''}{j.estado === 'fichada' ? t('pendingValidate') : t('askAdminFix')}</div>}
+    {j.estado !== 'planificada' && <div className="msg ok" style={{ marginTop: 10 }}><b>{j.estado === 'validada' ? t('doneValidated') : t('doneSent')}</b> · {presentes} {presentes === 1 ? t('person') : t('people')} · {total} h{porUnidad && cant ? ` · ${Number(num(cant)).toLocaleString(loc())} ${unidad}` : ''}{j.estado === 'fichada' ? t('pendingValidate') : t('askAdminFix')}</div>}
     {borr && editable && <div className="msg err" style={{ marginTop: 10 }}>{t('draftBack')}</div>}
     {msg && <div className={'msg ' + msg.t} style={{ marginTop: 10 }}>{msg.m}</div>}
     {editable && <div className="steps">
@@ -169,7 +169,7 @@ function Jornada({ j, trabajadores, onChange }: any) {
       <textarea rows={2} maxLength={2000} disabled={!editable} value={obs} onChange={e => setObs(e.target.value)} placeholder={t('notesPh')} /></div>
     <Incidencias j={j} lineas={lineas} editable={editable} />
     {editable && <div className="sbar">
-      <div className="sinfo">{falta ? <span style={{ color: 'var(--a)' }}>⚠ {falta}</span> : <span style={{ color: 'var(--ok)' }}>{t('allReady')}</span>}<span className="muted"> · {presentes} {t('presents')}{ausentes ? ` · ${ausentes} ${t('absents')}` : ''} · <b>{total} h</b>{porUnidad && cant ? ` · ${Number(num(cant)).toLocaleString('es')} ${unidad}` : ''}</span></div>
+      <div className="sinfo">{falta ? <span style={{ color: 'var(--a)' }}>⚠ {falta}</span> : <span style={{ color: 'var(--ok)' }}>{t('allReady')}</span>}<span className="muted"> · {presentes} {t('presents')}{ausentes ? ` · ${ausentes} ${t('absents')}` : ''} · <b>{total} h</b>{porUnidad && cant ? ` · ${Number(num(cant)).toLocaleString(loc())} ${unidad}` : ''}</span></div>
       <div className="row" style={{ flexWrap: 'nowrap' }}>
         <button className="btn btn-lg" disabled={busy} onClick={guardar}>{t('save')}</button>
         {j.estado === 'planificada' && <button className="btn btn-g btn-lg" style={{ flex: 1 }} disabled={busy || !!falta} onClick={fichar}>{t('sendDay')}</button>}

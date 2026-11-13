@@ -1,13 +1,14 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
 import Shell from '@/lib/Shell';
+import { loc } from '@/lib/i18n';
 import { sb, hoy, todas } from '@/lib/supabase';
 
 type Msg = { t: 'ok' | 'err'; m: string } | null;
 const TIPO: Record<string, string> = { peon: 'Peón', vendimiador: 'Vendimiador', jefe: 'Jefe de equipo', gerente: 'Gerente' };
 const UNI: Record<string, string> = { hora: '€ / hora', cepa: '€ / cepa', kg: '€ / kg' };
-const eur = (n: number) => Number(n).toLocaleString('es', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
-const fd = (f: string) => new Date(f + 'T00:00').toLocaleDateString('es');
+const eur = (n: number) => Number(n).toLocaleString(loc(), { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+const fd = (f: string) => new Date(f + 'T00:00').toLocaleDateString(loc());
 
 function Matriz({ clientes, servicios, tarifas, onSaved }: { clientes: any[]; servicios: any[]; tarifas: any[]; onSaved: () => void }) {
   const [cli, setCli] = useState(''); const [desde, setDesde] = useState(hoy()); const [vals, setVals] = useState<Record<string, string>>({});

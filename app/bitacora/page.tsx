@@ -1,9 +1,10 @@
 'use client';
 import { useEffect, useState, useMemo } from 'react';
 import Shell from '@/lib/Shell';
+import { loc } from '@/lib/i18n';
 import { sb, hoy, todas } from '@/lib/supabase';
 
-const f2 = (n: number) => n.toLocaleString('es', { maximumFractionDigits: 2 });
+const f2 = (n: number) => n.toLocaleString(loc(), { maximumFractionDigits: 2 });
 const EST: Record<string, string> = { planificada: 'b-pl', fichada: 'b-fi', validada: 'b-va' };
 const csvCell = (v: any) => { const s = String(v ?? ''); return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
 
@@ -51,7 +52,7 @@ function Contenido() {
       {filas.length === 0 ? <div className="muted">No hay jornadas con esos filtros.</div> :
         <table><thead><tr><th>Fecha</th><th>Cliente · servicio</th><th>Jefe</th><th>Pers.</th><th>Horas</th><th>Cantidad</th><th>Observaciones</th><th>Estado</th></tr></thead><tbody>
           {filas.map(f => <tr key={f.id}>
-            <td style={{ whiteSpace: 'nowrap' }}>{new Date(f.fecha + 'T00:00').toLocaleDateString('es', { weekday: 'short', day: 'numeric', month: 'short' })}</td>
+            <td style={{ whiteSpace: 'nowrap' }}>{new Date(f.fecha + 'T00:00').toLocaleDateString(loc(), { weekday: 'short', day: 'numeric', month: 'short' })}</td>
             <td>{f.cliente}<div className="muted">{f.servicio}{f.modalidad && f.modalidad !== 'hora' ? ` · por ${f.modalidad}` : ''}</div></td>
             <td>{f.jefe}</td>
             <td>{f.personas}{f.ausentes > 0 && <div className="muted">{f.ausentes} aus.</div>}{f.sinConf > 0 && <div className="muted">{f.sinConf} sin conf.</div>}</td>

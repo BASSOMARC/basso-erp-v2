@@ -90,3 +90,5 @@ export function useT() {
   const l = useSyncExternalStore((f) => { subs.add(f); return () => { subs.delete(f); }; }, () => lang, () => 'es' as Lang);
   return { lang: l, t: (k: string, p?: Record<string, string | number>) => tr(l, k, p) };
 }
+
+export const loc = () => (lang === 'fr' ? 'fr-FR' : 'es');

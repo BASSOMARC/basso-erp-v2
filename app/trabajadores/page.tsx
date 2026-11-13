@@ -1,8 +1,9 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
 import Shell from '@/lib/Shell';
+import { loc } from '@/lib/i18n';
 import { sb, todas, Perfil } from '@/lib/supabase';
-const f2 = (n: number) => n.toLocaleString('es', { maximumFractionDigits: 2 });
+const f2 = (n: number) => n.toLocaleString(loc(), { maximumFractionDigits: 2 });
 
 function Fila({ w, admin, onSaved }: any) {
   const [n, setN] = useState(w.nombre); const [t, setT] = useState(w.tipo); const [e, setE] = useState(w.estado); const [fi, setFi] = useState(w.fecha_inicio || ''); const [fh, setFh] = useState(w.funcion_habitual || '');

@@ -1,11 +1,12 @@
 'use client';
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import Shell from '@/lib/Shell';
+import { loc } from '@/lib/i18n';
 import { sb, hoy, todas, Perfil } from '@/lib/supabase';
 
 type Msg = { t: 'ok' | 'err'; m: string } | null;
 const MOD: Record<string, string> = { hora: 'por hora', cepa: 'por cepa', kg: 'por kg' };
-const fechaLarga = (f: string) => new Date(f + 'T00:00').toLocaleDateString('es', { weekday: 'short', day: 'numeric', month: 'short' });
+const fechaLarga = (f: string) => new Date(f + 'T00:00').toLocaleDateString(loc(), { weekday: 'short', day: 'numeric', month: 'short' });
 
 function Selector({ trabajadores, sel, setSel, ocupados }: any) {
   const [q, setQ] = useState('');

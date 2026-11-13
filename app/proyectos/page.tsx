@@ -2,8 +2,9 @@
 import { useEffect, useState, useCallback, Fragment } from 'react';
 import Link from 'next/link';
 import Shell from '@/lib/Shell';
+import { loc } from '@/lib/i18n';
 import { sb, todas } from '@/lib/supabase';
-const f2 = (n: number) => n.toLocaleString('es', { maximumFractionDigits: 2 });
+const f2 = (n: number) => n.toLocaleString(loc(), { maximumFractionDigits: 2 });
 const UN: Record<string, string> = { cepas: 'cepas', kg: 'kg', porcentaje: '% a criterio del jefe' };
 
 function Barra({ a }: { a: any }) {

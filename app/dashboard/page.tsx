@@ -2,13 +2,14 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Shell from '@/lib/Shell';
+import { loc } from '@/lib/i18n';
 import { sb, todas } from '@/lib/supabase';
 import { cargarMargen, Jm } from '@/lib/margen';
 
 const iso = (d: Date) => d.toISOString().slice(0, 10);
-const f2 = (n: number) => n.toLocaleString('es', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+const f2 = (n: number) => n.toLocaleString(loc(), { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 
-const eur = (n: number) => n.toLocaleString('es', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' €';
+const eur = (n: number) => n.toLocaleString(loc(), { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' €';
 const col = (n: number) => (n < 0 ? 'var(--r)' : 'var(--ok)');
 
 function Dinero() {
@@ -55,10 +56,10 @@ function Dinero() {
         <table style={{ whiteSpace: 'nowrap' }}><thead><tr><th>Día</th><th>Cliente · servicio</th><th>Horas</th><th>Cepas/kg</th><th>Ingreso</th><th>Coste</th><th>Margen</th><th>Ingreso/h</th></tr></thead>
           <tbody>{lista.map(j => { const mg = j.ingreso - j.coste; return (<tr key={j.id}>
             <td>{j.fecha.slice(8)}/{j.fecha.slice(5, 7)}</td><td>{j.cliente}<div className="muted">{j.servicio}{j.modalidad !== 'hora' ? ' · por ' + j.modalidad : ''}{j.estado === 'fichada' ? ' · sin validar' : ''}</div></td>
-            <td>{Math.round(j.horas * 10) / 10}</td><td>{j.cantidad ? j.cantidad.toLocaleString('es') : '—'}</td>
+            <td>{Math.round(j.horas * 10) / 10}</td><td>{j.cantidad ? j.cantidad.toLocaleString(loc()) : '—'}</td>
             <td>{j.sinTarifa ? <span style={{ color: 'var(--r)' }}>sin tarifa</span> : eur(j.ingreso)}</td><td>{eur(j.coste)}</td>
             <td style={{ color: j.sinTarifa ? 'var(--text2)' : col(mg), fontWeight: 700 }}>{j.sinTarifa ? '—' : eur(mg)}</td>
-            <td>{j.horas > 0 && !j.sinTarifa ? (Math.round(j.ingreso / j.horas * 100) / 100).toLocaleString('es') + ' €' : '—'}</td></tr>); })}</tbody></table>}
+            <td>{j.horas > 0 && !j.sinTarifa ? (Math.round(j.ingreso / j.horas * 100) / 100).toLocaleString(loc()) + ' €' : '—'}</td></tr>); })}</tbody></table>}
     </div>
   </>);
 }
@@ -85,7 +86,7 @@ function Contenido({ admin }: { admin: boolean }) {
     const dias7: Record<string, number> = {};
     for (let i = 0; i < 7; i++) dias7[iso(new Date(hace7.getTime() + i * 864e5))] = 0;
     act.forEach((r: any) => { const f = r.jornadas?.fecha; if (f in dias7) dias7[f] += Number(r.horas_normal) + Number(r.horas_extra); });
-    setD({ horas, trabs, porteurs, pend: pendQ.count || 0, inc: incQ.count || 0, clientes: Object.entries(porCliente).sort((a, b) => b[1] - a[1]).slice(0, 8), dias7, mes: ini.toLocaleString('es', { month: 'long', year: 'numeric' }) });
+    setD({ horas, trabs, porteurs, pend: pendQ.count || 0, inc: incQ.count || 0, clientes: Object.entries(porCliente).sort((a, b) => b[1] - a[1]).slice(0, 8), dias7, mes: ini.toLocaleString(loc(), { month: 'long', year: 'numeric' }) });
   })(); }, []);
   if (err) return <div className="msg err">{err}</div>;
   if (!d) return <div className="muted">Cargando…</div>;

@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import Shell from '@/lib/Shell';
+import { loc } from '@/lib/i18n';
 import { sb, todas, Perfil } from '@/lib/supabase';
 import { Fragment } from 'react';
 
@@ -39,8 +40,8 @@ const iso = (dt: Date) => `${dt.getUTCFullYear()}-${pad(dt.getUTCMonth() + 1)}-$
 const D = (f: string) => new Date(f + 'T00:00:00Z');
 const lunes = (f: string) => { const d = D(f); const w = (d.getUTCDay() + 6) % 7; d.setUTCDate(d.getUTCDate() - w); return iso(d); };
 const suma = (f: string, n: number) => { const d = D(f); d.setUTCDate(d.getUTCDate() + n); return iso(d); };
-const f1 = (n: number) => (Math.round(n * 100) / 100).toLocaleString('es', { maximumFractionDigits: 2 });
-const eur = (n: number) => n.toLocaleString('es', { style: 'currency', currency: 'EUR' });
+const f1 = (n: number) => (Math.round(n * 100) / 100).toLocaleString(loc(), { maximumFractionDigits: 2 });
+const eur = (n: number) => n.toLocaleString(loc(), { style: 'currency', currency: 'EUR' });
 const LJ = ['D', 'L', 'M', 'X', 'J', 'V', 'S'];
 const SEM = 35;
 const vig = (arr: any[], fecha: string) => arr.filter(x => x.desde <= fecha).sort((a, b) => b.desde.localeCompare(a.desde))[0];
@@ -175,7 +176,7 @@ function Contenido({ perfil }: { perfil: Perfil }) {
     <h2 style={{ marginBottom: 10 }}>Control de horas</h2>
     <div className="card row">
       <button className="btn" onClick={() => mover(-1)}>◀</button>
-      <div className="field" style={{ maxWidth: 140 }}><label>Mes</label><select value={m} onChange={e => setM(Number(e.target.value))}>{Array.from({ length: 12 }, (_, i) => <option key={i} value={i + 1}>{new Date(2000, i, 1).toLocaleString('es', { month: 'long' })}</option>)}</select></div>
+      <div className="field" style={{ maxWidth: 140 }}><label>Mes</label><select value={m} onChange={e => setM(Number(e.target.value))}>{Array.from({ length: 12 }, (_, i) => <option key={i} value={i + 1}>{new Date(2000, i, 1).toLocaleString(loc(), { month: 'long' })}</option>)}</select></div>
       <div className="field" style={{ maxWidth: 100 }}><label>Año</label><input type="number" value={y} onChange={e => setY(Number(e.target.value))} /></div>
       <button className="btn" onClick={() => mover(1)}>▶</button>
       <div className="field" style={{ maxWidth: 220 }}><label>Trabajador</label><select value={trab} onChange={e => setTrab(e.target.value)}><option value="">Todos</option>{lt.map(t => <option key={t.id} value={t.id}>{t.nombre}</option>)}</select></div>

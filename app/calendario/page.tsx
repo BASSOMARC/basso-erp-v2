@@ -1,10 +1,11 @@
 'use client';
 import { useEffect, useState, useMemo } from 'react';
 import Shell from '@/lib/Shell';
+import { loc } from '@/lib/i18n';
 import { sb, todas } from '@/lib/supabase';
 
 const pad = (n: number) => String(n).padStart(2, '0');
-const f2 = (n: number) => n.toLocaleString('es', { maximumFractionDigits: 2 });
+const f2 = (n: number) => n.toLocaleString(loc(), { maximumFractionDigits: 2 });
 
 function Contenido() {
   const hoy = new Date();
@@ -35,7 +36,7 @@ function Contenido() {
     <h2 style={{ marginBottom: 10 }}>Calendario</h2>
     <div className="card row" style={{ justifyContent: 'space-between' }}>
       <button className="btn" onClick={() => mover(-1)}>◀</button>
-      <b style={{ textTransform: 'capitalize' }}>{new Date(y, m - 1, 1).toLocaleString('es', { month: 'long', year: 'numeric' })}</b>
+      <b style={{ textTransform: 'capitalize' }}>{new Date(y, m - 1, 1).toLocaleString(loc(), { month: 'long', year: 'numeric' })}</b>
       <button className="btn" onClick={() => mover(1)}>▶</button>
     </div>
     {err && <div className="msg err">{err}</div>}
@@ -50,7 +51,7 @@ function Contenido() {
         </div>; })}
     </div>}
     {det && <div className="card" style={{ marginTop: 12 }}>
-      <h3>{new Date(sel + 'T00:00').toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long' })}</h3>
+      <h3>{new Date(sel + 'T00:00').toLocaleDateString(loc(), { weekday: 'long', day: 'numeric', month: 'long' })}</h3>
       {Object.entries(grupos).map(([k, rs]) => <div key={k} style={{ marginBottom: 10 }}>
         <div style={{ fontWeight: 600, fontSize: 13 }}>{k}</div>
         <table><tbody>{rs.sort((a: any, b: any) => (a.trabajadores?.nombre || '').localeCompare(b.trabajadores?.nombre || '')).map((r: any, i: number) => <tr key={i}>

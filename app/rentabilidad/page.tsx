@@ -2,14 +2,15 @@
 import { useEffect, useState, useMemo, useCallback, Fragment } from 'react';
 import Link from 'next/link';
 import Shell from '@/lib/Shell';
+import { loc } from '@/lib/i18n';
 import { sb, hoy, todas } from '@/lib/supabase';
 
 type Msg = { t: 'ok' | 'err'; m: string } | null;
-const eur = (n: number) => n.toLocaleString('es', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' €';
-const f1 = (n: number) => n.toLocaleString('es', { maximumFractionDigits: 1 });
+const eur = (n: number) => n.toLocaleString(loc(), { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' €';
+const f1 = (n: number) => n.toLocaleString(loc(), { maximumFractionDigits: 1 });
 const mes = (y: number, m: number) => [`${y}-${String(m).padStart(2, '0')}-01`, m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`];
 const vig = (lista: any[], fecha: string) => lista.find(x => x.desde <= fecha);
-const nombreMes = (f: string) => new Date(f + 'T00:00').toLocaleString('es', { month: 'long', year: 'numeric' });
+const nombreMes = (f: string) => new Date(f + 'T00:00').toLocaleString(loc(), { month: 'long', year: 'numeric' });
 
 /* ---------- Mensual: clientes que se facturan ---------- */
 function Mensual() {
@@ -66,7 +67,7 @@ function Mensual() {
     {abre && Object.entries<any>(f.serv).map(([n, s]) => <tr key={f.nombre + n} className="pend"><td style={{ paddingLeft: 24 }}>{n}</td><td>{f1(s.horas)}</td><td>{nf ? '—' : eur(s.ingreso)}</td><td>{eur(s.coste)}</td><td>{nf ? '—' : eur(s.ingreso - s.coste)}</td><td>{nf || pct(s.ingreso, s.coste) === null ? '—' : f1(pct(s.ingreso, s.coste)!) + ' %'}</td></tr>)}</Fragment>); };
   return (<>
     <div className="card row">
-      <div className="field" style={{ maxWidth: 130 }}><label>Mes</label><select value={m} onChange={e => setM(Number(e.target.value))}>{Array.from({ length: 12 }, (_, i) => <option key={i} value={i + 1}>{new Date(2000, i, 1).toLocaleString('es', { month: 'long' })}</option>)}</select></div>
+      <div className="field" style={{ maxWidth: 130 }}><label>Mes</label><select value={m} onChange={e => setM(Number(e.target.value))}>{Array.from({ length: 12 }, (_, i) => <option key={i} value={i + 1}>{new Date(2000, i, 1).toLocaleString(loc(), { month: 'long' })}</option>)}</select></div>
       <div className="field" style={{ maxWidth: 110 }}><label>Año</label><input type="number" value={y} onChange={e => setY(Number(e.target.value))} /></div>
       <label style={{ margin: 0 }}><input type="checkbox" checked={soloVal} onChange={e => setSoloVal(e.target.checked)} /> Solo jornadas validadas</label>
     </div>
@@ -131,7 +132,7 @@ function Fermages() {
     setVm({ t: 'ok', m: 'Venta registrada ✔' }); setV({ ...v, kg: '', importe: '', nota: '' }); cargar();
   }
   async function anular(x: any) {
-    if (!confirm(`¿Anular la venta de ${Number(x.importe).toLocaleString('es')} € del ${x.fecha}?`)) return;
+    if (!confirm(`¿Anular la venta de ${Number(x.importe).toLocaleString(loc())} € del ${x.fecha}?`)) return;
     const { error } = await sb.from('ventas_uva').update({ borrado_en: new Date().toISOString() }).eq('id', x.id); if (error) alert(error.message); cargar();
   }
   async function crearCamp() {
@@ -143,7 +144,7 @@ function Fermages() {
     <div className="muted" style={{ marginBottom: 10 }}>En los fermages no se factura por horas: el coste se acumula durante la campaña (poda, trabajos y vendimia) y el ingreso llega cuando vendes la uva a la cooperativa. Aquí se comparan las dos cosas.</div>
     <div className="card row">
       <div className="field" style={{ minWidth: 260 }}><label>Campaña</label><select value={camp} onChange={e => setCamp(e.target.value)}>{camps.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}</select></div>
-      {C && <div className="muted">{new Date(C.desde + 'T00:00').toLocaleDateString('es')} → {new Date(C.hasta + 'T00:00').toLocaleDateString('es')}</div>}
+      {C && <div className="muted">{new Date(C.desde + 'T00:00').toLocaleDateString(loc())} → {new Date(C.hasta + 'T00:00').toLocaleDateString(loc())}</div>}
       <label style={{ margin: 0 }}><input type="checkbox" checked={soloVal} onChange={e => setSoloVal(e.target.checked)} /> Solo jornadas validadas</label>
       <button className="btn" onClick={() => setVerCamp(!verCamp)}>{verCamp ? 'Ocultar' : 'Nueva campaña'}</button>
     </div>
@@ -164,9 +165,9 @@ function Fermages() {
         {filas.length === 0 ? <div className="muted">No hay clientes marcados como fermage. Márcalos en Clientes con «sin factura».</div> :
           <table><thead><tr><th>Fermage</th><th>Horas</th><th>Coste</th><th>Uva vendida</th><th>Resultado</th><th>€/kg</th></tr></thead><tbody>
             {filas.map(f => { const abre = abierto === f.id; return (<Fragment key={f.id}>
-              <tr style={{ cursor: 'pointer' }} onClick={() => setAbierto(abre ? null : f.id)}><td><b>{abre ? '▾' : '▸'} {f.nombre}</b></td><td>{f1(f.horas)}</td><td>{eur(f.coste)}</td><td>{eur(f.ingreso)}{f.kg > 0 ? <div className="muted">{f1(f.kg)} kg</div> : null}</td><td style={{ color: f.ingreso - f.coste < 0 ? 'var(--r)' : 'var(--ok)', fontWeight: 600 }}>{eur(f.ingreso - f.coste)}</td><td>{f.kg > 0 ? (f.ingreso / f.kg).toLocaleString('es', { maximumFractionDigits: 3 }) : '—'}</td></tr>
+              <tr style={{ cursor: 'pointer' }} onClick={() => setAbierto(abre ? null : f.id)}><td><b>{abre ? '▾' : '▸'} {f.nombre}</b></td><td>{f1(f.horas)}</td><td>{eur(f.coste)}</td><td>{eur(f.ingreso)}{f.kg > 0 ? <div className="muted">{f1(f.kg)} kg</div> : null}</td><td style={{ color: f.ingreso - f.coste < 0 ? 'var(--r)' : 'var(--ok)', fontWeight: 600 }}>{eur(f.ingreso - f.coste)}</td><td>{f.kg > 0 ? (f.ingreso / f.kg).toLocaleString(loc(), { maximumFractionDigits: 3 }) : '—'}</td></tr>
               {abre && <>{f.cs.map((x: any) => <tr key={f.id + x.o_mes} className="pend"><td style={{ paddingLeft: 24, textTransform: 'capitalize' }}>{nombreMes(x.o_mes)}</td><td>{f1(Number(x.o_horas))}</td><td>{eur(Number(x.o_coste))}</td><td></td><td></td><td></td></tr>)}
-                {f.vs.map((x: any) => <tr key={x.id} className="pend"><td style={{ paddingLeft: 24 }}>Venta {new Date(x.fecha + 'T00:00').toLocaleDateString('es')}{x.nota ? ' · ' + x.nota : ''}</td><td></td><td></td><td>{eur(Number(x.importe))}{x.kg ? <div className="muted">{f1(Number(x.kg))} kg</div> : null}</td><td><button className="btn" onClick={(e) => { e.stopPropagation(); anular(x); }}>Anular</button></td><td></td></tr>)}</>}</Fragment>); })}
+                {f.vs.map((x: any) => <tr key={x.id} className="pend"><td style={{ paddingLeft: 24 }}>Venta {new Date(x.fecha + 'T00:00').toLocaleDateString(loc())}{x.nota ? ' · ' + x.nota : ''}</td><td></td><td></td><td>{eur(Number(x.importe))}{x.kg ? <div className="muted">{f1(Number(x.kg))} kg</div> : null}</td><td><button className="btn" onClick={(e) => { e.stopPropagation(); anular(x); }}>Anular</button></td><td></td></tr>)}</>}</Fragment>); })}
           </tbody></table>}
       </div>
       <div className="card"><h3>Registrar venta de uva</h3>{vm && <div className={'msg ' + vm.t}>{vm.m}</div>}
