@@ -35,14 +35,14 @@ function Contenido() {
     {ps.length === 0 && <div className="card muted">Aucun chantier pour le moment.</div>}
     {ps.map((p, i) => {
       const pct = p.objetivo > 0 ? Math.min(100, Math.round(Number(p.avance) / Number(p.objetivo) * 100)) : null;
-      const u = UN[p.unidad] || p.unidad || '';
+      const u = p.unidad === 'porcentaje' ? '' : (UN[p.unidad] || p.unidad || '');
       return (<div className="card" key={i}>
         <div className="row" style={{ justifyContent: 'space-between' }}>
           <b>{p.proyecto}</b><span className="muted">{EST[p.estado] || p.estado}</span>
         </div>
         {pct !== null && <>
           <div style={{ background: 'var(--pl)', borderRadius: 6, height: 10, margin: '8px 0 4px', overflow: 'hidden' }}><div style={{ width: pct + '%', height: '100%', background: 'var(--p)' }} /></div>
-          <div className="muted">{nf(p.avance)} / {nf(p.objetivo)} {u} · {pct} %</div>
+          <div className="muted">{p.unidad === 'porcentaje' ? `${pct} %` : `${nf(p.avance)} / ${nf(p.objetivo)} ${u} · ${pct} %`}</div>
         </>}
         {pct === null && Number(p.avance) > 0 && <div className="muted">{nf(p.avance)} {u} réalisés</div>}
         <div className="muted">{nf(p.horas)} h travaillées</div>

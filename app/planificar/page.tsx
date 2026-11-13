@@ -86,18 +86,21 @@ function Contenido({ perfil }: { perfil: Perfil }) {
   const admin = perfil.rol === 'admin';
   const [servicios, setServicios] = useState<any[]>([]); const [clientes, setClientes] = useState<any[]>([]); const [jefes, setJefes] = useState<any[]>([]);
   const [trabajadores, setTrabajadores] = useState<any[]>([]); const [js, setJs] = useState<any[]>([]); const [dia, setDia] = useState<any[]>([]);
-  const [f, setF] = useState({ servicio_id: '', modalidad: 'hora', cliente_id: '', fecha: hoy(), jefe_id: '' });
+  const [f, setF] = useState({ servicio_id: '', modalidad: 'hora', cliente_id: '', fecha: hoy(), jefe_id: '', proyecto_id: '' });
+  const [proyectos, setProyectos] = useState<any[]>([]);
   const [sel, setSel] = useState<Set<string>>(new Set()); const [msg, setMsg] = useState<Msg>(null); const [busy, setBusy] = useState(false);
   const [abierto, setAbierto] = useState<string | null>(null); const [verServ, setVerServ] = useState(false);
 
   const cargar = useCallback(async () => {
-    const [a, b, c, d, e] = await Promise.all([
+    const [a, b, c, d, e, pq] = await Promise.all([
       sb.from('servicios').select('*').is('borrado_en', null).order('nombre'),
       todas((x, z) => sb.from('clientes').select('id,nombre').is('borrado_en', null).order('nombre').range(x, z)),
       sb.from('perfiles').select('user_id,nombre').eq('rol', 'jefe').eq('activo', true).order('nombre'),
       todas((x, z) => sb.from('trabajadores').select('id,nombre').eq('estado', 'activo').is('borrado_en', null).order('nombre').range(x, z)),
       sb.from('jornadas').select('id,fecha,estado,perfiles:jefe_id(nombre),tareas(nombre,modalidad,clientes(nombre)),jornada_trabajador(trabajador_id,confirmado,borrado_en,trabajadores(nombre))').is('borrado_en', null).gte('fecha', hoy()).order('fecha').limit(60),
+      sb.from('proyectos').select('id,cliente_id,nombre,unidad_avance,cantidad_objetivo').eq('estado', 'activo').is('borrado_en', null).order('nombre'),
     ]);
+    setProyectos(pq.data || []);
     setServicios(a.data || []); setClientes(b); setJefes(c.data || []); setTrabajadores(d); setJs(e.data || []);
   }, []);
   useEffect(() => { cargar(); }, [cargar]);
@@ -122,10 +125,12 @@ function Contenido({ perfil }: { perfil: Perfil }) {
     setBusy(true);
     try {
       const srv = servicios.find(s => s.id === f.servicio_id);
-      let { data: t } = await sb.from('tareas').select('id').eq('cliente_id', f.cliente_id).eq('servicio_id', f.servicio_id).eq('modalidad', f.modalidad).eq('estado', 'activa').is('proyecto_id', null).is('borrado_en', null).limit(1);
+      let tq = sb.from('tareas').select('id').eq('cliente_id', f.cliente_id).eq('servicio_id', f.servicio_id).eq('modalidad', f.modalidad).eq('estado', 'activa').is('borrado_en', null);
+      tq = f.proyecto_id ? tq.eq('proyecto_id', f.proyecto_id) : tq.is('proyecto_id', null);
+      const { data: t } = await tq.limit(1);
       let tarea_id = t?.[0]?.id;
       if (!tarea_id) {
-        const r = await sb.from('tareas').insert({ cliente_id: f.cliente_id, servicio_id: f.servicio_id, nombre: srv.nombre, temporada: srv.temporada, modalidad: f.modalidad }).select('id').single();
+        const r = await sb.from('tareas').insert({ cliente_id: f.cliente_id, servicio_id: f.servicio_id, nombre: srv.nombre, temporada: srv.temporada, modalidad: f.modalidad, proyecto_id: f.proyecto_id || null }).select('id').single();
         if (r.error || !r.data) throw new Error(r.error?.message || 'No se pudo crear la tarea'); tarea_id = r.data.id;
       }
       const j = await sb.from('jornadas').insert({ tarea_id, fecha: f.fecha, jefe_id: f.jefe_id }).select('id').single();
@@ -134,7 +139,7 @@ function Contenido({ perfil }: { perfil: Perfil }) {
       if (l.error) throw new Error('La jornada se creó pero falló la asignación del equipo (' + l.error.message + '). Ábrela en la lista de abajo y asigna el equipo.');
       const { count } = await sb.from('jornada_trabajador').select('id', { count: 'exact', head: true }).eq('jornada_id', j.data.id).is('borrado_en', null);
       if (count !== sel.size) throw new Error('El servidor guardó ' + count + ' de ' + sel.size + ' trabajadores. Revisa la lista de abajo.');
-      setMsg({ t: 'ok', m: `Jornada creada ✔ ${srv.nombre} · ${fechaLarga(f.fecha)} · ${sel.size} trabajadores. El jefe ya la ve.` });
+      setMsg({ t: 'ok', m: `Jornada creada ✔ ${srv.nombre}${f.proyecto_id ? ' (' + (proyectos.find(x => x.id === f.proyecto_id)?.nombre || '') + ')' : ''} · ${fechaLarga(f.fecha)} · ${sel.size} trabajadores. El jefe ya la ve.` });
       setSel(new Set());
     } catch (er: any) { setMsg({ t: 'err', m: er.message }); }
     setBusy(false); cargar();
@@ -153,7 +158,8 @@ function Contenido({ perfil }: { perfil: Perfil }) {
       <div className="row">
         <div className="field"><label>Servicio</label><select required value={f.servicio_id} onChange={e => { const s = servicios.find(x => x.id === e.target.value); setF({ ...f, servicio_id: e.target.value, modalidad: s?.modalidad || 'hora' }); }}><option value="">— elegir —</option>{serviciosActivos.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}</select></div>
         <div className="field" style={{ maxWidth: 140 }}><label>Se trabaja</label><select value={f.modalidad} onChange={e => setF({ ...f, modalidad: e.target.value })}>{Object.entries(MOD).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></div>
-        <div className="field"><label>Cliente</label><select required value={f.cliente_id} onChange={e => setF({ ...f, cliente_id: e.target.value })}><option value="">— elegir —</option>{clientes.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}</select></div>
+        <div className="field"><label>Cliente</label><select required value={f.cliente_id} onChange={e => setF({ ...f, cliente_id: e.target.value, proyecto_id: '' })}><option value="">— elegir —</option>{clientes.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}</select></div>
+        {proyectos.some(x => x.cliente_id === f.cliente_id) && <div className="field"><label>Proyecto (opcional)</label><select value={f.proyecto_id} onChange={e => { const pr = proyectos.find(x => x.id === e.target.value); setF({ ...f, proyecto_id: e.target.value, modalidad: pr ? (pr.unidad_avance === 'cepas' ? 'cepa' : pr.unidad_avance === 'kg' ? 'kg' : f.modalidad) : f.modalidad }); }}><option value="">— trabajo suelto, sin proyecto —</option>{proyectos.filter(x => x.cliente_id === f.cliente_id).map(x => <option key={x.id} value={x.id}>{x.nombre}</option>)}</select></div>}
         <div className="field" style={{ maxWidth: 170 }}><label>Fecha</label><input type="date" required value={f.fecha} onChange={e => setF({ ...f, fecha: e.target.value })} /></div>
         <div className="field"><label>Jefe de equipo</label><select required value={f.jefe_id} onChange={e => setF({ ...f, jefe_id: e.target.value })}><option value="">— elegir —</option>{jefes.map(x => <option key={x.user_id} value={x.user_id}>{x.nombre}</option>)}</select></div>
       </div>

@@ -21,7 +21,7 @@ export async function cargarMargen(a: string, b: string): Promise<{ js: Jm[]; si
   const get = (j: any): Jm => { const t = j.tareas; return (M[j.id] ||= { id: j.id, fecha: j.fecha, estado: j.estado, cliente: t?.clientes?.nombre || '—', servicio: t?.servicios?.nombre || 'Sin servicio', modalidad: t?.modalidad || 'hora', nf: !!t?.clientes?.no_facturable, horas: 0, personas: 0, cantidad: 0, unidad: '', coste: 0, ingreso: 0, sinTarifa: false }); };
   lin.forEach((r: any) => {
     const j = r.jornadas; const m = get(j); const h = Number(r.horas_normal) + Number(r.horas_extra);
-    const ch = vig(coste.data!.filter((x: any) => x.tipo_trabajador === (r.trabajadores?.tipo || 'peon')), j.fecha); if (!ch) sinCoste++;
+    const ch = vig(coste.data!.filter((x: any) => x.tipo_trabajador === (r.trabajadores?.tipo || 'peon')), j.fecha) || vig(coste.data!.filter((x: any) => x.tipo_trabajador === 'peon'), j.fecha); if (!ch) sinCoste++;
     m.horas += h; m.coste += h * Number(ch?.euros_hora || 0);
     (personas[j.id] ||= new Set()).add(r.trabajador_id);
     const kp = r.trabajador_id + j.fecha;

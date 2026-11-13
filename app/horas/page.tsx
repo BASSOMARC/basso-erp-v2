@@ -72,7 +72,7 @@ function Hoja({ y, m, admin, trab, setTrab }: { y: number; m: number; admin: boo
       if (r.ausente) d.aus = true; else {
         const h = Number(r.horas_normal) + Number(r.horas_extra); d.h += h;
         if (r.funcion === 'porteur') d.P = true;
-        const ch = vig(cost.coste.filter((x: any) => x.tipo_trabajador === t.tipo), f); d.coste += h * Number(ch?.euros_hora || 0);
+        const ch = vig(cost.coste.filter((x: any) => x.tipo_trabajador === t.tipo), f) || vig(cost.coste.filter((x: any) => x.tipo_trabajador === 'peon'), f); d.coste += h * Number(ch?.euros_hora || 0);
       }
     });
     Object.values(T).forEach((t: any) => Object.entries<any>(t.dia).forEach(([f, d]) => { d.plus = d.P && d.h > 0 ? Number(vig(cost.prima, f)?.euros_dia || 0) : 0; d.coste += d.plus; }));

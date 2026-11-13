@@ -44,7 +44,7 @@ function Mensual() {
       const c = (o[cli] ||= { nombre: t?.clientes?.nombre || '—', nf: !!t?.clientes?.no_facturable, horas: 0, coste: 0, ingreso: 0, serv: {} as Record<string, any> });
       const s = (c.serv[serv] ||= { horas: 0, coste: 0, ingreso: 0 }); return { c, s, cli, serv, t }; };
     data.lin.forEach((r: any) => { const j = r.jornadas; if (soloVal && j.estado !== 'validada') return; const h = Number(r.horas_normal) + Number(r.horas_extra); const { c, s, cli, serv, t } = fila(j);
-      const ch = vig(data.coste.filter((x: any) => x.tipo_trabajador === (r.trabajadores?.tipo || 'peon')), j.fecha); if (!ch) sinCoste++;
+      const ch = vig(data.coste.filter((x: any) => x.tipo_trabajador === (r.trabajadores?.tipo || 'peon')), j.fecha) || vig(data.coste.filter((x: any) => x.tipo_trabajador === 'peon'), j.fecha); if (!ch) sinCoste++;
       let cost = h * Number(ch?.euros_hora || 0);
       if (r.funcion === 'porteur') cost += Number(vig(data.prima, j.fecha)?.euros_dia || 0);
       let ing = 0; if (!c.nf && (t?.modalidad === 'hora' || !t?.modalidad)) { const p = precio(cli, serv, 'hora', j.fecha); if (!p) sinTarifa++; ing = h * Number(p?.precio || 0); }

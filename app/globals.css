@@ -113,3 +113,6 @@ textarea{font-size:16px}
 .lang{flex:none;white-space:nowrap}
 .who{flex-wrap:wrap;justify-content:flex-end}
 @media(max-width:640px){.who{width:100%;justify-content:space-between}}
+
+.pbox{margin-top:10px;background:var(--pl);border:1px solid var(--p);border-radius:var(--radius-lg);padding:10px 12px}
+.pn{font-size:14px;margin-bottom:6px}.pbar{height:12px;background:#fff;border-radius:8px;overflow:hidden;border:1px solid var(--border2)}.pbar i{display:block;height:100%;background:var(--p)}

@@ -5,20 +5,20 @@ import { sb, todas, Perfil } from '@/lib/supabase';
 const f2 = (n: number) => n.toLocaleString('es', { maximumFractionDigits: 2 });
 
 function Fila({ w, admin, onSaved }: any) {
-  const [n, setN] = useState(w.nombre); const [t, setT] = useState(w.tipo); const [e, setE] = useState(w.estado); const [fi, setFi] = useState(w.fecha_inicio || '');
+  const [n, setN] = useState(w.nombre); const [t, setT] = useState(w.tipo); const [e, setE] = useState(w.estado); const [fi, setFi] = useState(w.fecha_inicio || ''); const [fh, setFh] = useState(w.funcion_habitual || '');
   const [msg, setMsg] = useState<{ t: 'ok' | 'err'; m: string } | null>(null);
-  const cambiado = n !== w.nombre || t !== w.tipo || e !== w.estado || fi !== (w.fecha_inicio || '');
+  const cambiado = n !== w.nombre || t !== w.tipo || e !== w.estado || fi !== (w.fecha_inicio || '') || (t === 'vendimiador' ? fh : '') !== (w.funcion_habitual || '');
   async function guardar() {
     if (!n.trim()) { setMsg({ t: 'err', m: 'El nombre no puede estar vacío' }); return; }
-    const { error } = await sb.from('trabajadores').update({ nombre: n.trim(), tipo: t, estado: e, fecha_inicio: fi || null }).eq('id', w.id);
+    const { error } = await sb.from('trabajadores').update({ nombre: n.trim(), tipo: t, estado: e, fecha_inicio: fi || null, funcion_habitual: t === 'vendimiador' && fh ? fh : null }).eq('id', w.id);
     if (error) { setMsg({ t: 'err', m: error.message }); return; }
-    const { data } = await sb.from('trabajadores').select('nombre,tipo,estado,fecha_inicio').eq('id', w.id).single();
-    if (!data || data.nombre !== n.trim() || data.tipo !== t || data.estado !== e || (data.fecha_inicio || '') !== fi) { setMsg({ t: 'err', m: 'El servidor devolvió otros valores. NO está guardado.' }); return; }
+    const { data } = await sb.from('trabajadores').select('nombre,tipo,estado,fecha_inicio,funcion_habitual').eq('id', w.id).single();
+    if (!data || data.nombre !== n.trim() || data.tipo !== t || data.estado !== e || (data.fecha_inicio || '') !== fi || (data.funcion_habitual || '') !== (t === 'vendimiador' ? fh : '')) { setMsg({ t: 'err', m: 'El servidor devolvió otros valores. NO está guardado.' }); return; }
     setMsg({ t: 'ok', m: 'Guardado ✔' }); onSaved();
   }
   return (<tr>
     <td><input disabled={!admin} value={n} onChange={x => setN(x.target.value)} /></td>
-    <td><select disabled={!admin} value={t} onChange={x => setT(x.target.value)}><option value="peon">Peón</option><option value="jefe">Jefe</option><option value="gerente">Gerente</option></select></td>
+    <td><select disabled={!admin} value={t} onChange={x => setT(x.target.value)}><option value="peon">Peón</option><option value="vendimiador">Vendimiador</option><option value="jefe">Jefe</option><option value="gerente">Gerente</option></select>{t === 'vendimiador' && <select style={{ marginTop: 4 }} disabled={!admin} value={fh} onChange={x => setFh(x.target.value)} title="Función habitual en vendimia"><option value="">Función: sin fijar</option><option value="coupeur">Cortador</option><option value="porteur">Porteur</option></select>}</td>
     <td><select disabled={!admin} value={e} onChange={x => setE(x.target.value)}><option value="activo">Activo</option><option value="baja">Baja</option></select></td>
     <td><input type="date" disabled={!admin} value={fi} onChange={x => setFi(x.target.value)} /></td>
     <td>{f2(w.horas)} h</td><td>{w.dias}</td><td>{w.p > 0 ? <span className="pbadge">P {w.p}</span> : ''}</td>
@@ -32,7 +32,7 @@ function Contenido({ perfil }: { perfil: Perfil }) {
   const [nn, setNn] = useState(''); const [nt, setNt] = useState('peon'); const [msg, setMsg] = useState<{ t: 'ok' | 'err'; m: string } | null>(null);
   const cargar = useCallback(async () => {
     try {
-      const tr = await todas((a, b) => sb.from('trabajadores').select('id,nombre,tipo,estado,fecha_inicio').is('borrado_en', null).order('nombre').range(a, b));
+      const tr = await todas((a, b) => sb.from('trabajadores').select('id,nombre,tipo,estado,fecha_inicio,funcion_habitual').is('borrado_en', null).order('nombre').range(a, b));
       const ho = await todas((a, b) => sb.from('jornada_trabajador').select('trabajador_id,horas_normal,horas_extra,ausente,funcion').is('borrado_en', null).eq('confirmado', true).range(a, b));
       const m: Record<string, { h: number; d: number; p: number }> = {};
       ho.forEach((r: any) => { if (r.ausente) return; const x = (m[r.trabajador_id] ||= { h: 0, d: 0, p: 0 }); x.h += Number(r.horas_normal) + Number(r.horas_extra); x.d++; if (r.funcion === 'porteur') x.p++; });
@@ -52,7 +52,7 @@ function Contenido({ perfil }: { perfil: Perfil }) {
     {!admin && <div className="msg ok">Solo lectura: los cambios los hace un administrador.</div>}
     {admin && <div className="card"><h3>Nuevo trabajador</h3><div className="row">
       <div className="field"><label>Nombre</label><input value={nn} onChange={e => setNn(e.target.value)} /></div>
-      <div className="field" style={{ maxWidth: 170 }}><label>Tipo</label><select value={nt} onChange={e => setNt(e.target.value)}><option value="peon">Peón</option><option value="jefe">Jefe</option><option value="gerente">Gerente</option></select></div>
+      <div className="field" style={{ maxWidth: 190 }}><label>Tipo</label><select value={nt} onChange={e => setNt(e.target.value)}><option value="peon">Peón</option><option value="vendimiador">Vendimiador</option><option value="jefe">Jefe</option><option value="gerente">Gerente</option></select></div>
       <button className="btn btn-g" onClick={crear}>Crear</button></div>{msg && <div className={'msg ' + msg.t} style={{ marginTop: 8 }}>{msg.m}</div>}</div>}
     <div className="card"><div className="row" style={{ marginBottom: 8 }}>
       <div className="field" style={{ maxWidth: 260 }}><input placeholder="Buscar trabajador…" value={q} onChange={e => setQ(e.target.value)} /></div>

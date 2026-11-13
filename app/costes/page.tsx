@@ -4,7 +4,7 @@ import Shell from '@/lib/Shell';
 import { sb, hoy, todas } from '@/lib/supabase';
 
 type Msg = { t: 'ok' | 'err'; m: string } | null;
-const TIPO: Record<string, string> = { peon: 'Peón', jefe: 'Jefe de equipo', gerente: 'Gerente' };
+const TIPO: Record<string, string> = { peon: 'Peón', vendimiador: 'Vendimiador', jefe: 'Jefe de equipo', gerente: 'Gerente' };
 const UNI: Record<string, string> = { hora: '€ / hora', cepa: '€ / cepa', kg: '€ / kg' };
 const eur = (n: number) => Number(n).toLocaleString('es', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
 const fd = (f: string) => new Date(f + 'T00:00').toLocaleDateString('es');
