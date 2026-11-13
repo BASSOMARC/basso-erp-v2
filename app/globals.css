@@ -85,3 +85,23 @@ a.kpi:hover{background:var(--goldl)}
 .navmenu a{color:var(--text)!important;padding:10px 12px;border-radius:6px;font-size:14px}
 .navmenu a:hover{background:var(--bg3)}.navmenu a.active{background:var(--gl);color:var(--g)!important;border-color:transparent;font-weight:600}
 @media(max-width:640px){.navmenu{position:fixed;left:8px;right:8px;top:auto}.topbar .brand{font-size:14px}}
+
+/* fichaje móvil v2 */
+.jhead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.jt{font-size:19px;font-weight:700;color:var(--g);line-height:1.2}.jc{font-size:16px;font-weight:600;margin-top:2px}
+.steps{display:flex;gap:6px;margin-top:12px}
+.step{flex:1;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--text2);background:var(--bg3);border-radius:20px;padding:6px 10px}
+.step i{font-style:normal;width:22px;height:22px;border-radius:50%;background:var(--border2);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12px;flex:none}
+.step.ok{background:var(--okl);color:var(--ok)}.step.ok i{background:var(--ok)}
+.stepper label{margin-bottom:4px}.stp{display:flex;align-items:stretch;gap:6px}
+.stp button{width:52px;min-height:48px;font-size:26px;line-height:1;border:1px solid var(--border2);background:var(--bg);border-radius:var(--radius);cursor:pointer;color:var(--g);font-weight:700}
+.stp button:active{background:var(--gl)}.stp input{text-align:center;font-size:22px;font-weight:700;min-height:48px;width:84px}
+.wnums>.stepper{flex:none;max-width:none}
+.cbox{margin-top:14px;background:var(--goldl);border:2px solid var(--gold);border-radius:var(--radius-lg);padding:12px}
+.cbox label{font-size:14px;font-weight:600;color:var(--text)}.cbox input{font-size:30px;font-weight:700;text-align:center;min-height:60px;margin-top:6px}
+.btn-warn{width:100%;background:var(--al);border-color:var(--a);color:#7a4a05;font-weight:700}
+.chipgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.chipgrid .btn{min-height:46px;font-size:14px}
+.sbar{position:sticky;bottom:0;margin:14px -14px -14px;padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:var(--bg);border-top:1px solid var(--border2);box-shadow:0 -6px 16px rgba(0,0,0,.08);border-radius:0 0 var(--radius-lg) var(--radius-lg);z-index:20}
+.sinfo{font-size:13px;margin-bottom:8px;font-weight:600}
+textarea{font-size:16px}
+@media(max-width:640px){.content{padding:10px 10px 90px}input,select{font-size:16px}}

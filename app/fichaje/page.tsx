@@ -1,7 +1,9 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
 import Shell from '@/lib/Shell';
-import { sb, hoy, Perfil } from '@/lib/supabase';
+import { sb, Perfil } from '@/lib/supabase';
+const hoy = () => new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
+const mas = (f: string, n: number) => new Date(new Date(f + 'T12:00').getTime() + n * 864e5).toISOString().slice(0, 10);
 
 type Est = 'pend' | 'pres' | 'aus';
 type Linea = { trabajador_id: string; nombre: string; h: string; he: string; est: Est; funcion: string | null; asignado: boolean };
@@ -11,24 +13,27 @@ const TIPOS: Record<string, string> = { accidente: 'Accidente', retraso: 'Retras
 
 function Incidencias({ j, lineas, editable }: any) {
   const [lista, setLista] = useState<any[]>((j.incidencias || []).filter((i: any) => !i.borrado_en));
-  const [tipo, setTipo] = useState('otra'); const [tr, setTr] = useState(''); const [d, setD] = useState(''); const [msg, setMsg] = useState<Msg>(null); const [abierto, setAbierto] = useState(false);
+  const [tipo, setTipo] = useState('otra'); const [tr, setTr] = useState(''); const [d, setD] = useState(''); const [msg, setMsg] = useState<Msg>(null); const [abierto, setAbierto] = useState(false); const [busy, setBusy] = useState(false);
   async function crear() {
-    setMsg(null); if (d.trim().length < 3) { setMsg({ t: 'err', m: 'Describe la incidencia' }); return; }
+    setMsg(null); if (d.trim().length < 3) { setMsg({ t: 'err', m: 'Cuenta brevemente qué ha pasado' }); return; }
+    setBusy(true);
     const { data, error } = await sb.from('incidencias').insert({ jornada_id: j.id, tipo, descripcion: d.trim(), trabajador_id: tr || null }).select('id,tipo,descripcion,estado,trabajador_id').single();
+    setBusy(false);
     if (error || !data) { setMsg({ t: 'err', m: 'No se guardó: ' + (error?.message || 'sin respuesta') }); return; }
-    setLista(l => [...l, data]); setD(''); setTr(''); setTipo('otra'); setMsg({ t: 'ok', m: 'Incidencia registrada ✔ El administrador la verá.' });
+    setLista(l => [...l, data]); setD(''); setTr(''); setTipo('otra'); setAbierto(false);
   }
-  return (<div style={{ marginTop: 12 }}>
-    {lista.map(i => <div key={i.id} className={'inc' + (i.estado === 'resuelta' ? ' res' : '')}><b>{TIPOS[i.tipo]}</b>{i.trabajador_id ? ' · ' + (lineas.find((l: Linea) => l.trabajador_id === i.trabajador_id)?.nombre || '') : ''}: {i.descripcion} <span className="muted">({i.estado})</span></div>)}
-    {editable && !abierto && <button className="btn" onClick={() => setAbierto(true)}>⚠ Registrar incidencia</button>}
-    {editable && abierto && <div className="card" style={{ background: 'var(--bg2)' }}>
+  return (<div style={{ marginTop: 14 }}>
+    {lista.map(i => <div key={i.id} className={'inc' + (i.estado === 'resuelta' ? ' res' : '')}><b>{TIPOS[i.tipo]}</b>{i.trabajador_id ? ' · ' + (lineas.find((l: Linea) => l.trabajador_id === i.trabajador_id)?.nombre || '') : ''}: {i.descripcion} <span className="muted">({i.estado === 'resuelta' ? 'resuelta' : 'enviada al administrador'})</span></div>)}
+    {lista.length > 0 && !abierto && <div className="msg ok" style={{ marginTop: 6 }}>Reporte enviado ✔ El administrador lo verá.</div>}
+    {editable && !abierto && <button className="btn btn-lg btn-warn" onClick={() => setAbierto(true)}>⚠ Reportar un problema</button>}
+    {editable && abierto && <div className="card" style={{ background: 'var(--bg2)', marginTop: 8 }}>
+      <h3>¿Qué ha pasado?</h3>
       {msg && <div className={'msg ' + msg.t}>{msg.m}</div>}
-      <div className="row">
-        <div className="field" style={{ maxWidth: 170 }}><label>Tipo</label><select value={tipo} onChange={e => setTipo(e.target.value)}>{Object.entries(TIPOS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></div>
-        <div className="field" style={{ maxWidth: 200 }}><label>Trabajador (opcional)</label><select value={tr} onChange={e => setTr(e.target.value)}><option value="">— nadie en concreto —</option>{lineas.map((l: Linea) => <option key={l.trabajador_id} value={l.trabajador_id}>{l.nombre}</option>)}</select></div>
-        <div className="field" style={{ minWidth: 220 }}><label>Qué ha pasado</label><input value={d} onChange={e => setD(e.target.value)} /></div>
-        <button className="btn btn-g" onClick={crear}>Registrar</button>
-      </div></div>}
+      <div className="chipgrid">{Object.entries(TIPOS).map(([k, v]) => <button key={k} type="button" className={'btn' + (tipo === k ? ' btn-g' : '')} onClick={() => setTipo(k)}>{v}</button>)}</div>
+      <div className="field" style={{ marginTop: 10 }}><label>¿Con quién? (opcional)</label><select value={tr} onChange={e => setTr(e.target.value)}><option value="">— nadie en concreto —</option>{lineas.map((l: Linea) => <option key={l.trabajador_id} value={l.trabajador_id}>{l.nombre}</option>)}</select></div>
+      <div style={{ marginTop: 10 }}><label>Cuéntalo con tus palabras</label><textarea rows={3} value={d} onChange={e => setD(e.target.value)} placeholder="Ej. se rompió una tijera, llovió desde las 11…" /></div>
+      <div className="row" style={{ marginTop: 10 }}><button className="btn btn-lg btn-g" disabled={busy} onClick={crear}>Enviar reporte</button><button className="btn btn-lg" onClick={() => { setAbierto(false); setMsg(null); }}>Cancelar</button></div>
+    </div>}
   </div>);
 }
 
@@ -69,7 +74,7 @@ function Jornada({ j, trabajadores, onChange }: any) {
         const { data: o } = await sb.from('jornadas').select('observaciones').eq('id', j.id).single(); if ((o?.observaciones || '') !== obs.trim()) throw new Error('Las observaciones no se guardaron correctamente.');
         j.observaciones = obs.trim() || null; setObs(obs.trim());
       }
-      setMsg({ t: 'ok', m: 'Guardado y verificado en el servidor ✔' }); return true;
+      try { localStorage.removeItem(clave); } catch {} setBorr(false); setMsg({ t: 'ok', m: 'Guardado y verificado en el servidor ✔' }); return true;
     } catch (e: any) { setMsg({ t: 'err', m: 'No se guardó: ' + e.message }); return false; }
     finally { setBusy(false); }
   }
@@ -93,45 +98,64 @@ function Jornada({ j, trabajadores, onChange }: any) {
     setLineas(ls => ls.filter((_, k) => k !== i));
   }
   const total = lineas.reduce((s, l) => s + (l.est === 'pres' ? num(l.h) + num(l.he) : 0), 0);
+  const asistOk = lineas.length > 0 && pend === 0;
+  const horasOk = asistOk && lineas.some(l => l.est === 'pres') && lineas.every(l => l.est !== 'pres' || num(l.h) + num(l.he) > 0);
+  const cantOk = !porUnidad || num(cant) > 0;
+  const falta = !asistOk ? (lineas.length ? `Faltan ${pend} por confirmar` : 'Añade al menos un trabajador') : !horasOk ? 'Faltan las horas de algún presente' : !cantOk ? `Falta el total de ${modalidad === 'cepa' ? 'cepas' : 'kg'} del equipo` : '';
+  const presentes = lineas.filter(l => l.est === 'pres').length; const ausentes = lineas.filter(l => l.est === 'aus').length;
+  const clave = 'borrador-' + j.id; const [borr, setBorr] = useState(false); const [listo, setListo] = useState(false);
+  useEffect(() => { if (!editable) { setListo(true); return; } try { const r = localStorage.getItem(clave); if (r) { const d = JSON.parse(r); if (Array.isArray(d.lineas) && d.lineas.length && lineas.every(l => d.lineas.some((x: any) => x.trabajador_id === l.trabajador_id))) { setLineas(d.lineas); setCant(d.cant ?? ''); setObs(d.obs ?? ''); setBorr(true); } } } catch {} setListo(true); }, []);
+  useEffect(() => { if (!listo || !editable) return; try { localStorage.setItem(clave, JSON.stringify({ lineas, cant, obs })); } catch {} }, [lineas, cant, obs, listo]);
+  const todosPresentes = () => setLineas(ls => ls.map(l => l.est === 'pend' ? { ...l, est: 'pres', h: l.h || '7', funcion: vendimia ? (l.funcion || 'coupeur') : l.funcion } : l));
+  const paso = (i: number, d: number) => set(i, { h: String(Math.max(0, Math.min(24, (num(lineas[i].h) || 0) + d))) });
 
-  return (<div className="card">
-    <div className="row" style={{ justifyContent: 'space-between' }}>
-      <div><h3 style={{ marginBottom: 2 }}>{j.tareas?.nombre} — {j.tareas?.clientes?.nombre}</h3>
-        <div className="muted">{j.perfiles?.nombre ? 'Jefe: ' + j.perfiles.nombre + ' · ' : ''}{modalidad === 'hora' ? 'Por horas' : modalidad === 'cepa' ? 'Por cepa' : 'Por kg'}</div></div>
-      <span className={'badge ' + (j.estado === 'validada' ? 'b-va' : j.estado === 'fichada' ? 'b-fi' : 'b-pl')}>{j.estado}</span>
+  return (<div className="card jcard">
+    <div className="jhead">
+      <div><div className="jt">{j.tareas?.nombre}</div><div className="jc">{j.tareas?.clientes?.nombre}</div>
+        <div className="muted">{modalidad === 'hora' ? 'Trabajo por horas' : modalidad === 'cepa' ? 'Trabajo por cepa' : 'Trabajo por kg'}{j.perfiles?.nombre ? ' · Jefe: ' + j.perfiles.nombre : ''}</div></div>
+      <span className={'badge ' + (j.estado === 'validada' ? 'b-va' : j.estado === 'fichada' ? 'b-fi' : 'b-pl')}>{j.estado === 'planificada' ? 'por hacer' : j.estado === 'fichada' ? 'enviada' : 'validada'}</span>
     </div>
-    {msg && <div className={'msg ' + msg.t} style={{ marginTop: 8 }}>{msg.m}</div>}
-    {!editable && <div className="muted" style={{ margin: '8px 0' }}>Jornada validada: para corregirla, un administrador usa «Control de horas».</div>}
-    {editable && pend > 0 && <div className="muted" style={{ margin: '8px 0' }}>Confirma uno por uno si cada trabajador asignado ha venido.</div>}
-    <div>{lineas.map((l, i) => (<div key={l.trabajador_id} className={'wrow' + (l.est === 'pend' ? ' pend' : '')}>
-      <div className="wname">{l.nombre}{!l.asignado && <span className="muted"> · añadido por el jefe</span>}{editable && !l.asignado && <button className="btn" style={{ marginLeft: 8 }} onClick={() => quitar(i)}>Quitar</button>}</div>
+    {j.estado !== 'planificada' && <div className="msg ok" style={{ marginTop: 10 }}><b>{j.estado === 'validada' ? 'Jornada validada ✔' : 'Jornada enviada ✔'}</b> · {presentes} {presentes === 1 ? 'persona' : 'personas'} · {total} h{porUnidad && cant ? ` · ${Number(num(cant)).toLocaleString('es')} ${unidad}` : ''}{j.estado === 'fichada' ? ' · pendiente de validar por el administrador. Si corriges algo, pulsa Guardar.' : ' · para corregir algo, avisa a un administrador.'}</div>}
+    {borr && editable && <div className="msg err" style={{ marginTop: 10 }}>Recuperé lo que habías escrito y no estaba guardado. Revísalo y pulsa Guardar.</div>}
+    {msg && <div className={'msg ' + msg.t} style={{ marginTop: 10 }}>{msg.m}</div>}
+    {editable && <div className="steps">
+      <div className={'step' + (asistOk ? ' ok' : '')}><i>{asistOk ? '✓' : '1'}</i>Asistencia</div>
+      <div className={'step' + (horasOk ? ' ok' : '')}><i>{horasOk ? '✓' : '2'}</i>Horas</div>
+      {porUnidad ? <div className={'step' + (cantOk ? ' ok' : '')}><i>{cantOk ? '✓' : '3'}</i>{modalidad === 'cepa' ? 'Cepas' : 'Kg'}</div> : <div className="step ok"><i>✓</i>Sin cantidad</div>}
+    </div>}
+    {editable && pend > 0 && <button type="button" className="btn btn-lg btn-ok on" style={{ width: '100%', marginTop: 10 }} onClick={todosPresentes}>✓ Todos presentes · 7 h</button>}
+    <div style={{ marginTop: 10 }}>{lineas.map((l, i) => (<div key={l.trabajador_id} className={'wrow' + (l.est === 'pend' ? ' pend' : '')}>
+      <div className="wname">{l.nombre}{!l.asignado && <span className="muted"> · añadido por ti</span>}{editable && !l.asignado && <button className="btn" style={{ marginLeft: 8 }} onClick={() => quitar(i)}>Quitar</button>}</div>
       <div className="wbtns">
         <button type="button" disabled={!editable} className={'btn btn-ok' + (l.est === 'pres' ? ' on' : '')} onClick={() => set(i, { est: 'pres', h: l.h || '7', funcion: vendimia ? (l.funcion || 'coupeur') : l.funcion })}>✓ Presente</button>
         <button type="button" disabled={!editable} className={'btn btn-no' + (l.est === 'aus' ? ' on' : '')} onClick={() => set(i, { est: 'aus' })}>✗ Ausente</button>
       </div>
-      <div className="wnums">
-        <div><label>Horas</label><input type="number" step="0.25" min="0" max="24" inputMode="decimal" disabled={!editable || l.est !== 'pres'} value={l.h} onChange={e => set(i, { h: e.target.value })} /></div>
-        <div><label>Extra</label><input type="number" step="0.25" min="0" max="24" inputMode="decimal" disabled={!editable || l.est !== 'pres'} value={l.he} onChange={e => set(i, { he: e.target.value })} /></div>
-        {vendimia && <div><label>Función</label><button type="button" disabled={!editable || l.est !== 'pres'} className={'btn btn-p' + (l.funcion === 'porteur' ? ' on' : '')} title="Porteur" onClick={() => set(i, { funcion: l.funcion === 'porteur' ? 'coupeur' : 'porteur' })}>{l.funcion === 'porteur' ? 'Porteur' : 'Cortador'}</button></div>}
-      </div>
+      {l.est === 'pres' && <div className="wnums">
+        <div className="stepper"><label>Horas</label>
+          <div className="stp"><button type="button" disabled={!editable} onClick={() => paso(i, -0.5)}>−</button>
+            <input type="number" step="0.25" min="0" max="24" inputMode="decimal" disabled={!editable} value={l.h} onChange={e => set(i, { h: e.target.value })} />
+            <button type="button" disabled={!editable} onClick={() => paso(i, 0.5)}>+</button></div></div>
+        {vendimia && <div style={{ flex: 1 }}><label>Función</label><button type="button" disabled={!editable} className={'btn btn-p' + (l.funcion === 'porteur' ? ' on' : '')} onClick={() => set(i, { funcion: l.funcion === 'porteur' ? 'coupeur' : 'porteur' })}>{l.funcion === 'porteur' ? 'Porteur' : 'Cortador'}</button></div>}
+        {num(l.he) > 0 && <div className="muted" style={{ alignSelf: 'center' }}>+ {l.he} h extra</div>}
+      </div>}
     </div>))}</div>
-    {editable && <div className="row" style={{ marginTop: 8 }}>
-      <div className="field"><select value={nuevo} onChange={e => setNuevo(e.target.value)}><option value="">+ Añadir otro trabajador (sustitución)…</option>{disponibles.map((t: any) => <option key={t.id} value={t.id}>{t.nombre}</option>)}</select></div>
+    {editable && <div className="row" style={{ marginTop: 4 }}>
+      <div className="field"><select value={nuevo} onChange={e => setNuevo(e.target.value)}><option value="">+ Ha venido otra persona…</option>{disponibles.map((t: any) => <option key={t.id} value={t.id}>{t.nombre}</option>)}</select></div>
       <button className="btn" disabled={!nuevo} onClick={() => { const t = trabajadores.find((x: any) => x.id === nuevo); setLineas(ls => [...ls, { trabajador_id: t.id, nombre: t.nombre, h: '7', he: '', est: 'pres', aus: false, funcion: vendimia ? 'coupeur' : null, asignado: false } as any]); setNuevo(''); }}>Añadir</button>
     </div>}
-    <div className="row" style={{ marginTop: 10 }}>
-      <div className="field" style={{ maxWidth: 200 }}><label>{porUnidad ? (modalidad === 'cepa' ? 'Total de cepas realizadas (equipo) *' : 'Total de kg realizados (equipo) *') : 'Cantidad realizada (opcional)'}</label>
-        <input type="number" min="0" step="1" inputMode="numeric" disabled={!editable} value={cant} onChange={e => setCant(e.target.value)} /></div>
-      {!porUnidad && <div className="field" style={{ maxWidth: 110 }}><label>Unidad</label><select disabled={!editable} value={unidad} onChange={e => setUnidad(e.target.value)}><option value="cepas">cepas</option><option value="kg">kg</option></select></div>}
-      <div className="muted">Horas del día: <b>{total}</b></div>
-    </div>
-    <div style={{ marginTop: 12 }}><label>Observaciones de la jornada (opcional)</label>
-      <textarea rows={2} maxLength={2000} disabled={!editable} value={obs} onChange={e => setObs(e.target.value)} placeholder="Ej. parcela terminada, falta la fila 12, material en mal estado…" /></div>
+    {porUnidad && <div className="cbox"><label>{modalidad === 'cepa' ? 'Cepas hechas hoy por todo el equipo' : 'Kg hechos hoy por todo el equipo'}</label>
+      <input type="number" min="0" step="1" inputMode="numeric" disabled={!editable} value={cant} onChange={e => setCant(e.target.value)} placeholder="0" /></div>}
+    {!porUnidad && <div className="row" style={{ marginTop: 10 }}><div className="field" style={{ maxWidth: 220 }}><label>Cantidad realizada (opcional)</label><input type="number" min="0" step="1" inputMode="numeric" disabled={!editable} value={cant} onChange={e => setCant(e.target.value)} /></div>
+      <div className="field" style={{ maxWidth: 110 }}><label>Unidad</label><select disabled={!editable} value={unidad} onChange={e => setUnidad(e.target.value)}><option value="cepas">cepas</option><option value="kg">kg</option></select></div></div>}
+    <div style={{ marginTop: 12 }}><label>Notas de la jornada (opcional)</label>
+      <textarea rows={2} maxLength={2000} disabled={!editable} value={obs} onChange={e => setObs(e.target.value)} placeholder="Ej. parcela terminada, falta la fila 12…" /></div>
     <Incidencias j={j} lineas={lineas} editable={editable} />
-    {editable && <div className="row" style={{ marginTop: 12 }}>
-      <button className="btn btn-lg" disabled={busy} onClick={guardar}>Guardar</button>
-      {j.estado === 'planificada' && <button className="btn btn-g btn-lg" disabled={busy} onClick={fichar}>Fichar jornada</button>}
-      {j.estado === 'fichada' && <span className="muted">Fichada. Si corriges algo, pulsa Guardar.</span>}
+    {editable && <div className="sbar">
+      <div className="sinfo">{falta ? <span style={{ color: 'var(--a)' }}>⚠ {falta}</span> : <span style={{ color: 'var(--ok)' }}>✓ Todo listo</span>}<span className="muted"> · {presentes} presentes{ausentes ? ` · ${ausentes} ausentes` : ''} · <b>{total} h</b>{porUnidad && cant ? ` · ${Number(num(cant)).toLocaleString('es')} ${unidad}` : ''}</span></div>
+      <div className="row" style={{ flexWrap: 'nowrap' }}>
+        <button className="btn btn-lg" disabled={busy} onClick={guardar}>Guardar</button>
+        {j.estado === 'planificada' && <button className="btn btn-g btn-lg" style={{ flex: 1 }} disabled={busy || !!falta} onClick={fichar}>Fichar jornada</button>}
+      </div>
     </div>}
   </div>);
 }
@@ -156,12 +180,13 @@ function Contenido({ perfil }: { perfil: Perfil }) {
   return (<>
     <h2 style={{ marginBottom: 10 }}>{perfil.rol === 'jefe' ? 'Mis jornadas' : 'Fichaje'}</h2>
     <div className="row" style={{ marginBottom: 12 }}>
-      <div className="field" style={{ maxWidth: 180 }}><label>Día</label><input type="date" value={fecha} onChange={e => setFecha(e.target.value)} /></div>
-      {Object.keys(prox).sort().map(f => <button key={f} className={'btn' + (f === fecha ? ' btn-g' : '')} onClick={() => setFecha(f)}>{new Date(f + 'T00:00').toLocaleDateString('es', { weekday: 'short', day: 'numeric', month: 'short' })} · {prox[f]}</button>)}
+      {[[-1, 'Ayer'], [0, 'Hoy'], [1, 'Mañana']].map(([n, t]: any) => <button key={t} className={'btn btn-lg' + (fecha === mas(hoy(), n) ? ' btn-g' : '')} onClick={() => setFecha(mas(hoy(), n))}>{t}</button>)}
+      <div className="field" style={{ maxWidth: 170 }}><input type="date" aria-label="Otro día" value={fecha} onChange={e => setFecha(e.target.value)} /></div>
+      {Object.keys(prox).sort().filter(f => f !== hoy() && f !== mas(hoy(), 1)).map(f => <button key={f} className={'btn' + (f === fecha ? ' btn-g' : '')} onClick={() => setFecha(f)}>{new Date(f + 'T00:00').toLocaleDateString('es', { weekday: 'short', day: 'numeric', month: 'short' })} · {prox[f]}</button>)}
     </div>
     {err && <div className="msg err">{err}</div>}
     {jornadas === null && !err && <div className="muted">Cargando…</div>}
-    {jornadas?.length === 0 && <div className="card muted">No hay jornadas asignadas para este día.</div>}
+    {jornadas?.length === 0 && <div className="card" style={{ textAlign: 'center', padding: 24 }}><div style={{ fontSize: 28 }}>🌿</div><b>No tienes jornadas para este día.</b><div className="muted" style={{ marginTop: 4 }}>Cuando el administrador te asigne una, aparecerá aquí con tu equipo.</div></div>}
     {jornadas?.map(j => <Jornada key={j.id + j.estado} j={j} trabajadores={trabajadores} onChange={cargar} />)}
   </>);
 }

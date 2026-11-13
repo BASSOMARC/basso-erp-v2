@@ -107,6 +107,13 @@ function Contenido({ perfil }: { perfil: Perfil }) {
   })(); }, [f.fecha, js]);
   const ocupados = useMemo(() => { const o: Record<string, string> = {}; dia.forEach((r: any) => { o[r.trabajador_id] = r.jornadas?.tareas?.clientes?.nombre || ''; }); return o; }, [dia]);
   const serviciosActivos = servicios.filter(s => s.activo);
+  const [ult, setUlt] = useState<any>(null);
+  useEffect(() => { (async () => {
+    setUlt(null); if (!f.cliente_id || !f.servicio_id) return;
+    const { data } = await sb.from('jornadas').select('fecha,jefe_id,perfiles:jefe_id(nombre),tareas!inner(cliente_id,servicio_id),jornada_trabajador(trabajador_id,borrado_en)').eq('tareas.cliente_id', f.cliente_id).eq('tareas.servicio_id', f.servicio_id).is('borrado_en', null).lt('fecha', f.fecha).order('fecha', { ascending: false }).limit(1);
+    const u = data?.[0]; if (u) setUlt({ fecha: u.fecha, jefe_id: u.jefe_id, jefe: (u as any).perfiles?.nombre, ids: (u.jornada_trabajador || []).filter((l: any) => !l.borrado_en).map((l: any) => l.trabajador_id) });
+  })(); }, [f.cliente_id, f.servicio_id, f.fecha]);
+  const repetir = () => { if (!ult) return; setF(x => ({ ...x, jefe_id: ult.jefe_id || x.jefe_id })); setSel(new Set(ult.ids.filter((id: string) => trabajadores.some((t: any) => t.id === id)))); };
 
   async function crear(e: React.FormEvent) {
     e.preventDefault(); setMsg(null);
@@ -151,6 +158,7 @@ function Contenido({ perfil }: { perfil: Perfil }) {
         <div className="field"><label>Jefe de equipo</label><select required value={f.jefe_id} onChange={e => setF({ ...f, jefe_id: e.target.value })}><option value="">— elegir —</option>{jefes.map(x => <option key={x.user_id} value={x.user_id}>{x.nombre}</option>)}</select></div>
       </div>
       {f.modalidad !== 'hora' && <div className="muted" style={{ marginTop: 6 }}>Trabajo {MOD[f.modalidad]}: el jefe tendrá que indicar el total de {f.modalidad === 'cepa' ? 'cepas' : 'kg'} realizado para poder fichar.</div>}
+      {ult && <div className="msg ok" style={{ marginTop: 10, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}><span>La última vez ({fechaLarga(ult.fecha)}): jefe {ult.jefe || '—'} y {ult.ids.length} trabajadores.</span><button type="button" className="btn btn-g" onClick={repetir}>↻ Repetir ese equipo</button></div>}
       <div style={{ marginTop: 12 }}><label>Trabajadores asignados</label>
         <Selector trabajadores={trabajadores} sel={sel} setSel={setSel} ocupados={ocupados} /></div>
       <div style={{ marginTop: 12 }}><button className="btn btn-g" disabled={busy}>{busy ? 'Creando…' : 'Crear jornada'}</button></div>

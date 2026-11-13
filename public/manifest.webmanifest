@@ -1,0 +1,17 @@
+{
+ "name": "Basso Services Viticoles",
+ "short_name": "Basso ERP",
+ "start_url": "/basso-erp-v2/",
+ "scope": "/basso-erp-v2/",
+ "display": "standalone",
+ "background_color": "#ffffff",
+ "theme_color": "#8B1A2B",
+ "icons": [
+  {
+   "src": "https://i.postimg.cc/bvDHmp47/WhatsApp-Image-2026-05-14-at-17-24-20-(6).jpg",
+   "sizes": "512x512",
+   "type": "image/jpeg",
+   "purpose": "any"
+  }
+ ]
+}
