@@ -116,3 +116,9 @@ textarea{font-size:16px}
 
 .pbox{margin-top:10px;background:var(--pl);border:1px solid var(--p);border-radius:var(--radius-lg);padding:10px 12px}
 .pn{font-size:14px;margin-bottom:6px}.pbar{height:12px;background:#fff;border-radius:8px;overflow:hidden;border:1px solid var(--border2)}.pbar i{display:block;height:100%;background:var(--p)}
+
+.aviso{background:#FFF4D6;border-bottom:2px solid #E0A800;padding:10px 14px;display:flex;flex-direction:column;gap:4px}
+.aviso-t{font-weight:700;color:#7A5A00}
+.aviso-i{color:#3a2e00;text-decoration:none;font-size:14px;padding:4px 0}
+.aviso-i:hover{text-decoration:underline}
+.aviso-i.late{color:var(--r);font-weight:600}

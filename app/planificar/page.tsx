@@ -112,6 +112,15 @@ function Contenido({ perfil }: { perfil: Perfil }) {
   const ocupados = useMemo(() => { const o: Record<string, string> = {}; dia.forEach((r: any) => { o[r.trabajador_id] = r.jornadas?.tareas?.clientes?.nombre || ''; }); return o; }, [dia]);
   const serviciosActivos = servicios.filter(s => s.activo);
   const [ult, setUlt] = useState<any>(null);
+  const [prevId, setPrevId] = useState<string | null>(null); const [prevNota, setPrevNota] = useState('');
+  useEffect(() => {
+    if (!servicios.length) return;
+    let raw: string | null = null; try { raw = sessionStorage.getItem('prefill'); if (raw) sessionStorage.removeItem('prefill'); } catch {}
+    if (!raw) return;
+    try { const p = JSON.parse(raw); const s = servicios.find((x: any) => x.id === p.servicio_id);
+      setF(x => ({ ...x, cliente_id: p.cliente_id || '', servicio_id: p.servicio_id || '', modalidad: s?.modalidad || x.modalidad, fecha: p.fecha || x.fecha, jefe_id: p.jefe_id || '', proyecto_id: p.proyecto_id || '' }));
+      setPrevId(p.id || null); setPrevNota(p.nota || ''); } catch {}
+  }, [servicios.length]);
   useEffect(() => { (async () => {
     setUlt(null); if (!f.cliente_id || !f.servicio_id) return;
     const { data } = await sb.from('jornadas').select('fecha,jefe_id,perfiles:jefe_id(nombre),tareas!inner(cliente_id,servicio_id),jornada_trabajador(trabajador_id,borrado_en)').eq('tareas.cliente_id', f.cliente_id).eq('tareas.servicio_id', f.servicio_id).is('borrado_en', null).lt('fecha', f.fecha).order('fecha', { ascending: false }).limit(1);
@@ -142,6 +151,7 @@ function Contenido({ perfil }: { perfil: Perfil }) {
       if (count !== sel.size) throw new Error('El servidor guardó ' + count + ' de ' + sel.size + ' trabajadores. Revisa la lista de abajo.');
       setMsg({ t: 'ok', m: `Jornada creada ✔ ${srv.nombre}${f.proyecto_id ? ' (' + (proyectos.find(x => x.id === f.proyecto_id)?.nombre || '') + ')' : ''} · ${fechaLarga(f.fecha)} · ${sel.size} trabajadores. El jefe ya la ve.` });
       setSel(new Set());
+      if (prevId) { await sb.from('trabajos_previstos').update({ estado: 'planificado' }).eq('id', prevId); setPrevId(null); setPrevNota(''); }
     } catch (er: any) { setMsg({ t: 'err', m: er.message }); }
     setBusy(false); cargar();
   }
@@ -153,6 +163,7 @@ function Contenido({ perfil }: { perfil: Perfil }) {
 
   return (<>
     <h2 style={{ marginBottom: 10 }}>Planificar</h2>
+    {prevId && <div className="msg ok">Preparando un trabajo previsto{prevNota ? ': ' + prevNota : ''}. Al crear la jornada se marcará como planificado.</div>}
     <form className="card" onSubmit={crear}>
       <h3>Nueva jornada</h3>
       {msg && <div className={'msg ' + msg.t}>{msg.m}</div>}

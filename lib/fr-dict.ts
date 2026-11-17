@@ -154,4 +154,18 @@ export const FR: Record<string, string> = {
   ' días de porteur': ' jours de porteur', '{n} días de porteur': '{n} jours de porteur',
   'enero': 'janvier', 'febrero': 'février', 'marzo': 'mars', 'abril': 'avril', 'mayo': 'mai', 'junio': 'juin', 'julio': 'juillet', 'agosto': 'août', 'septiembre': 'septembre', 'octubre': 'octobre', 'noviembre': 'novembre', 'diciembre': 'décembre',
   'Hay {n} jornadas': 'Il y a {n} journées',
+
+  'Trabajos previstos': 'Travaux prévus', 'Por confirmar': 'À confirmer', 'Confirmado': 'Confirmé', 'Planificado': 'Planifié', 'Hecho': 'Fait',
+  'Apunta aquí los trabajos que te llaman aunque aún no estén definidos. Un banner te avisará unos días antes de la fecha de inicio hasta que los planifiques.': "Notez ici les travaux qu'on vous demande, même s'ils ne sont pas encore définis. Une bannière vous préviendra quelques jours avant la date de début, jusqu'à ce que vous les planifiiez.",
+  'Nuevo trabajo previsto': 'Nouveau travail prévu', 'Servicio (opcional)': 'Prestation (facultatif)', '— sin definir —': '— non défini —', 'Fecha de inicio': 'Date de début', 'Fecha de fin (opcional)': 'Date de fin (facultatif)',
+  'Jefe (opcional)': "Chef d'équipe (facultatif)", 'Avisar (días antes)': 'Prévenir (jours avant)', 'Ej. llamó el propietario, 3 ha, ir a ver la parcela': 'Ex. le propriétaire a appelé, 3 ha, aller voir la parcelle',
+  'Elige cliente y fecha de inicio': 'Choisissez le client et la date de début', 'Trabajo previsto guardado ✔ Te avisaré {n} día(s) antes.': 'Travail prévu enregistré ✔ Je vous préviendrai {n} jour(s) avant.',
+  'Ver también planificados, hechos y cancelados': 'Voir aussi les travaux planifiés, faits et annulés', 'No hay trabajos previstos pendientes.': 'Aucun travail prévu en attente.',
+  'Inicio': 'Début', 'Cliente · servicio': 'Client · prestation', 'Detalle': 'Détail', 'hasta {x}': "jusqu'au {x}", '{n} personas': '{n} personnes',
+  'hace {n} día(s)': 'il y a {n} jour(s)', 'HOY': "AUJOURD'HUI", 'mañana': 'demain', 'en {n} días': 'dans {n} jours',
+  '¿Quitar el trabajo previsto de {a} ({b})?': 'Retirer le travail prévu de {a} ({b}) ?',
+  'Trabajo previsto por planificar': 'Travail prévu à planifier', '{n} trabajos previstos por planificar': '{n} travaux prévus à planifier',
+  'empieza HOY': "commence AUJOURD'HUI", 'empieza mañana': 'commence demain', 'empieza en {n} días': 'commence dans {n} jours', 'empezaba hace {n} día(s)': 'devait commencer il y a {n} jour(s)',
+  'y {n} más…': 'et {n} de plus…', 'Preparando un trabajo previsto: {x}. Al crear la jornada se marcará como planificado.': "Préparation d'un travail prévu : {x}. À la création de la journée, il sera marqué comme planifié.",
+  'Preparando un trabajo previsto. Al crear la jornada se marcará como planificado.': "Préparation d'un travail prévu. À la création de la journée, il sera marqué comme planifié.",
 };
