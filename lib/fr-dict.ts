@@ -168,4 +168,5 @@ export const FR: Record<string, string> = {
   'empieza HOY': "commence AUJOURD'HUI", 'empieza mañana': 'commence demain', 'empieza en {n} días': 'commence dans {n} jours', 'empezaba hace {n} día(s)': 'devait commencer il y a {n} jour(s)',
   'y {n} más…': 'et {n} de plus…', 'Preparando un trabajo previsto: {x}. Al crear la jornada se marcará como planificado.': "Préparation d'un travail prévu : {x}. À la création de la journée, il sera marqué comme planifié.",
   'Preparando un trabajo previsto. Al crear la jornada se marcará como planificado.': "Préparation d'un travail prévu. À la création de la journée, il sera marqué comme planifié.",
+  'Organizador ↗': 'Organisateur ↗', 'Organizador': 'Organisateur',
 };

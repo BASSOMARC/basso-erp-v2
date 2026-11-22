@@ -29,6 +29,7 @@ function Avisos() {
     {a.length > 4 && <Link href="/previstos" className="aviso-i">y {a.length - 4} más…</Link>}
   </div>);
 }
+const ORGANIZADOR = 'https://bassomarc.github.io/organizador/';
 export default function Shell({ roles, children }: { roles: string[]; children: (p: Perfil) => React.ReactNode }) {
   const [perfil, setPerfil] = useState<Perfil | null>(null);
   const [err, setErr] = useState('');
@@ -59,6 +60,7 @@ export default function Shell({ roles, children }: { roles: string[]; children: 
           const items = (NAV[perfil.rol] || []).filter(x => x[2] === g); const act = items.some(x => x[0] === path);
           return (<details key={g + path} className={'navg' + (act ? ' active' : '')}><summary>{g} ▾</summary><div className="navmenu">{items.map(([h, tx]) => <Link key={h} href={h} className={path === h ? 'active' : ''}>{tx}</Link>)}</div></details>);
         })}
+        {(perfil.rol === 'admin' || perfil.rol === 'secretaria') && <a href={ORGANIZADOR} target="_blank" rel="noopener">Organizador ↗</a>}
       </div>
       <div className="who">{perfil.rol !== 'cliente' && <span className="lang"><button className={lang === 'es' ? 'on' : ''} onClick={() => cambiarIdioma('es')}>ES</button><button className={lang === 'fr' ? 'on' : ''} onClick={() => cambiarIdioma('fr')}>FR</button></span>}{perfil.nombre}{perfil.rol === 'cliente' ? '' : ' · ' + (lang === 'fr' ? ({ admin: 'administrateur', secretaria: 'secrétariat', jefe: "chef d'équipe" } as any)[perfil.rol] : perfil.rol)}<button className="btn" onClick={async () => { const n = prompt(t('pwdPrompt')); if (!n) return; if (n.length < 10) { alert(t('pwdShort')); return; } const { error } = await sb.auth.updateUser({ password: n }); alert(error ? t('pwdFail') + error.message : t('pwdOk')); }}>{t('changePwd')}</button><button className="btn" onClick={async () => { await sb.auth.signOut(); router.replace('/login'); }}>{t('logout')}</button></div>
     </div>
