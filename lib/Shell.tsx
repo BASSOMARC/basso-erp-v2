@@ -25,9 +25,17 @@ function Avisos({ rol }: { rol: string }) {
   const [copiaVieja, setCV] = useState(false);
   useEffect(() => { try { const u = localStorage.getItem('ultima_copia'); setCV(!u || (Date.now() - new Date(u + 'T12:00').getTime()) / 864e5 > 7); } catch {} }, []);
   const admin = rol === 'admin';
-  if (!a.length && !(copiaVieja && admin)) return null;
+  const [driveVieja, setDV] = useState<boolean | null>(null);
+  useEffect(() => { if (rol !== 'admin') return; (async () => {
+    const { data, error } = await sb.from('copias_drive').select('creado_en').eq('ok', true).order('creado_en', { ascending: false }).limit(1);
+    if (error) return;
+    const u = data?.[0]?.creado_en;
+    setDV(!u || (Date.now() - new Date(u).getTime()) / 864e5 > 3);
+  })(); }, [rol]);
+  const mostrarLocal = admin && driveVieja === true;
+  if (!a.length && !mostrarLocal) return null;
   return (<div className="aviso">
-    {copiaVieja && admin && <Link href="/copia" className="aviso-i late">💾 Hace más de 7 días que no descargas una copia de seguridad. Pulsa aquí para hacerla.</Link>}
+    {mostrarLocal && <Link href="/copia" className="aviso-i late">⚠️ La copia automática en Google Drive tiene más de 3 días o ha fallado. Pulsa aquí para ver el estado y descargar una copia a mano.</Link>}
     {a.length > 0 && <div className="aviso-t">🔔 {a.length === 1 ? 'Trabajo previsto por planificar' : a.length + ' trabajos previstos por planificar'}</div>}
     {a.slice(0, 4).map(r => <Link key={r.id} href="/previstos" className={'aviso-i' + (r.d < 0 ? ' late' : '')}><b>{r.clientes?.nombre}</b>{r.servicios?.nombre ? ' · ' + r.servicios.nombre : ''} — {r.d < 0 ? 'empezaba hace ' + (-r.d) + ' día(s)' : r.d === 0 ? 'empieza HOY' : r.d === 1 ? 'empieza mañana' : 'empieza en ' + r.d + ' días'}{r.nota ? ' · ' + r.nota : ''}</Link>)}
     {a.length > 4 && <Link href="/previstos" className="aviso-i">y {a.length - 4} más…</Link>}
