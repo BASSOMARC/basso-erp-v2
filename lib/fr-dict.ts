@@ -169,4 +169,8 @@ export const FR: Record<string, string> = {
   'y {n} más…': 'et {n} de plus…', 'Preparando un trabajo previsto: {x}. Al crear la jornada se marcará como planificado.': "Préparation d'un travail prévu : {x}. À la création de la journée, il sera marqué comme planifié.",
   'Preparando un trabajo previsto. Al crear la jornada se marcará como planificado.': "Préparation d'un travail prévu. À la création de la journée, il sera marqué comme planifié.",
   'Organizador ↗': 'Organisateur ↗', 'Organizador': 'Organisateur',
+  'Copia de seguridad': 'Sauvegarde', 'Descargar copia completa': 'Télécharger la sauvegarde complète', 'Última copia hecha desde este navegador: ': 'Dernière sauvegarde faite depuis ce navigateur : ', 'ninguna todavía': 'aucune pour le moment',
+  '💾 Hace más de 7 días que no descargas una copia de seguridad. Pulsa aquí para hacerla.': '💾 Cela fait plus de 7 jours que vous n\'avez pas téléchargé de sauvegarde. Cliquez ici pour la faire.',
+  'Descarga todos los datos del ERP en un solo archivo. Hazla al menos una vez por semana y guárdala fuera del ERP. El archivo contiene datos personales y costes: no lo compartas ni lo subas a GitHub.': "Téléchargez toutes les données de l'ERP dans un seul fichier. Faites-le au moins une fois par semaine et conservez-le en dehors de l'ERP. Le fichier contient des données personnelles et des coûts : ne le partagez pas et ne le mettez pas sur GitHub.",
+  'Copia descargada ✔ {a} tablas, {b} filas. Guárdala en un sitio seguro fuera del ERP (por ejemplo, tu Drive privado).': 'Sauvegarde téléchargée ✔ {a} tables, {b} lignes. Conservez-la dans un endroit sûr en dehors de l\'ERP (par exemple votre Drive privé).',
 };

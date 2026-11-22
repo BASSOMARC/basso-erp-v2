@@ -9,12 +9,12 @@ export const LOGO = 'https://i.postimg.cc/bvDHmp47/WhatsApp-Image-2026-05-14-at-
 const NAV: Record<string, [string, string, string?][]> = {
   admin: [['/dashboard', 'Resumen'], ['/calendario', 'Calendario'], ['/planificar', 'Planificar'], ['/previstos', 'Trabajos previstos'], ['/fichaje', 'Fichaje'], ['/validar', 'Validar'], ['/horas', 'Control de horas'],
     ['/incidencias', 'Incidencias', 'Equipo y clientes'], ['/clientes', 'Clientes', 'Equipo y clientes'], ['/trabajadores', 'Trabajadores', 'Equipo y clientes'], ['/proyectos', 'Proyectos', 'Equipo y clientes'], ['/bitacora', 'Bitácora', 'Equipo y clientes'],
-    ['/costes', 'Costes y tarifas', 'Dinero'], ['/rentabilidad', 'Rentabilidad', 'Dinero']],
+    ['/costes', 'Costes y tarifas', 'Dinero'], ['/rentabilidad', 'Rentabilidad', 'Dinero'], ['/copia', 'Copia de seguridad', 'Dinero']],
   secretaria: [['/dashboard', 'Resumen'], ['/calendario', 'Calendario'], ['/planificar', 'Planificar'], ['/previstos', 'Trabajos previstos'], ['/horas', 'Horas'], ['/incidencias', 'Incidencias'], ['/clientes', 'Clientes', 'Gestión'], ['/trabajadores', 'Trabajadores', 'Gestión'], ['/proyectos', 'Proyectos', 'Gestión'], ['/bitacora', 'Bitácora', 'Gestión']],
   jefe: [['/fichaje', 'Mis jornadas']],
   cliente: [['/portal', 'Espace client']],
 };
-function Avisos() {
+function Avisos({ rol }: { rol: string }) {
   const [a, setA] = useState<any[]>([]);
   useEffect(() => { (async () => {
     const hoyS = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
@@ -22,9 +22,13 @@ function Avisos() {
     const t0 = new Date(hoyS + 'T00:00').getTime();
     setA((data || []).map((r: any) => ({ ...r, d: Math.round((new Date(r.fecha_inicio + 'T00:00').getTime() - t0) / 864e5) })).filter((r: any) => r.d <= r.aviso_dias));
   })(); }, []);
-  if (!a.length) return null;
+  const [copiaVieja, setCV] = useState(false);
+  useEffect(() => { try { const u = localStorage.getItem('ultima_copia'); setCV(!u || (Date.now() - new Date(u + 'T12:00').getTime()) / 864e5 > 7); } catch {} }, []);
+  const admin = rol === 'admin';
+  if (!a.length && !(copiaVieja && admin)) return null;
   return (<div className="aviso">
-    <div className="aviso-t">🔔 {a.length === 1 ? 'Trabajo previsto por planificar' : a.length + ' trabajos previstos por planificar'}</div>
+    {copiaVieja && admin && <Link href="/copia" className="aviso-i late">💾 Hace más de 7 días que no descargas una copia de seguridad. Pulsa aquí para hacerla.</Link>}
+    {a.length > 0 && <div className="aviso-t">🔔 {a.length === 1 ? 'Trabajo previsto por planificar' : a.length + ' trabajos previstos por planificar'}</div>}
     {a.slice(0, 4).map(r => <Link key={r.id} href="/previstos" className={'aviso-i' + (r.d < 0 ? ' late' : '')}><b>{r.clientes?.nombre}</b>{r.servicios?.nombre ? ' · ' + r.servicios.nombre : ''} — {r.d < 0 ? 'empezaba hace ' + (-r.d) + ' día(s)' : r.d === 0 ? 'empieza HOY' : r.d === 1 ? 'empieza mañana' : 'empieza en ' + r.d + ' días'}{r.nota ? ' · ' + r.nota : ''}</Link>)}
     {a.length > 4 && <Link href="/previstos" className="aviso-i">y {a.length - 4} más…</Link>}
   </div>);
@@ -64,7 +68,7 @@ export default function Shell({ roles, children }: { roles: string[]; children: 
       </div>
       <div className="who">{perfil.rol !== 'cliente' && <span className="lang"><button className={lang === 'es' ? 'on' : ''} onClick={() => cambiarIdioma('es')}>ES</button><button className={lang === 'fr' ? 'on' : ''} onClick={() => cambiarIdioma('fr')}>FR</button></span>}{perfil.nombre}{perfil.rol === 'cliente' ? '' : ' · ' + (lang === 'fr' ? ({ admin: 'administrateur', secretaria: 'secrétariat', jefe: "chef d'équipe" } as any)[perfil.rol] : perfil.rol)}<button className="btn" onClick={async () => { const n = prompt(t('pwdPrompt')); if (!n) return; if (n.length < 10) { alert(t('pwdShort')); return; } const { error } = await sb.auth.updateUser({ password: n }); alert(error ? t('pwdFail') + error.message : t('pwdOk')); }}>{t('changePwd')}</button><button className="btn" onClick={async () => { await sb.auth.signOut(); router.replace('/login'); }}>{t('logout')}</button></div>
     </div>
-    {(perfil.rol === 'admin' || perfil.rol === 'secretaria') && <Avisos key={path} />}
+    {(perfil.rol === 'admin' || perfil.rol === 'secretaria') && <Avisos key={path} rol={perfil.rol} />}
     <div className="content">{children(perfil)}</div>
   </>);
 }
