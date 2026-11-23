@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState, useCallback, useMemo } from 'react';
+import Link from 'next/link';
 import Shell from '@/lib/Shell';
 import { loc } from '@/lib/i18n';
 import { sb, hoy, todas, Perfil } from '@/lib/supabase';
@@ -171,7 +172,13 @@ function Contenido({ perfil }: { perfil: Perfil }) {
         <div className="field"><label>Servicio</label><select required value={f.servicio_id} onChange={e => { const s = servicios.find(x => x.id === e.target.value); setF({ ...f, servicio_id: e.target.value, modalidad: s?.modalidad || 'hora' }); }}><option value="">— elegir —</option>{serviciosActivos.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}</select></div>
         <div className="field" style={{ maxWidth: 140 }}><label>Se trabaja</label><select value={f.modalidad} onChange={e => setF({ ...f, modalidad: e.target.value })}>{Object.entries(MOD).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></div>
         <div className="field"><label>Cliente</label><select required value={f.cliente_id} onChange={e => setF({ ...f, cliente_id: e.target.value, proyecto_id: '' })}><option value="">— elegir —</option>{clientes.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}</select></div>
-        {proyectos.some(x => x.cliente_id === f.cliente_id) && <div className="field"><label>Proyecto (opcional)</label><select value={f.proyecto_id} onChange={e => { const pr = proyectos.find(x => x.id === e.target.value); setF({ ...f, proyecto_id: e.target.value, modalidad: pr ? (pr.unidad_avance === 'cepas' ? 'cepa' : pr.unidad_avance === 'kg' ? 'kg' : f.modalidad) : f.modalidad }); }}><option value="">— trabajo suelto, sin proyecto —</option>{proyectos.filter(x => x.cliente_id === f.cliente_id).map(x => <option key={x.id} value={x.id}>{x.nombre}</option>)}</select></div>}
+        <div className="field"><label>Proyecto (opcional)</label>
+          <select value={f.proyecto_id} disabled={!f.cliente_id} onChange={e => { const pr = proyectos.find(x => x.id === e.target.value); setF({ ...f, proyecto_id: e.target.value, modalidad: pr ? (pr.unidad_avance === 'cepas' ? 'cepa' : pr.unidad_avance === 'kg' ? 'kg' : f.modalidad) : f.modalidad }); }}>
+            <option value="">{!f.cliente_id ? '— primero elige el cliente —' : '— trabajo suelto, sin proyecto —'}</option>
+            {proyectos.filter(x => x.cliente_id === f.cliente_id).map(x => <option key={x.id} value={x.id}>{x.nombre}</option>)}
+          </select>
+          {f.cliente_id && !proyectos.some(x => x.cliente_id === f.cliente_id) && <div className="muted" style={{ marginTop: 4 }}>Este cliente no tiene proyectos activos. <Link href="/proyectos">Crear un proyecto →</Link></div>}
+        </div>
         <div className="field" style={{ maxWidth: 170 }}><label>Fecha</label><input type="date" required value={f.fecha} onChange={e => setF({ ...f, fecha: e.target.value })} /></div>
         <div className="field"><label>Jefe de equipo</label><select required value={f.jefe_id} onChange={e => setF({ ...f, jefe_id: e.target.value })}><option value="">— elegir —</option>{jefes.map(x => <option key={x.user_id} value={x.user_id}>{x.nombre}</option>)}</select></div>
       </div>
