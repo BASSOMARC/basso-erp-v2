@@ -112,7 +112,7 @@ function Contenido({ perfil }: { perfil: Perfil }) {
   })(); }, [f.fecha, js]);
   const ocupados = useMemo(() => { const o: Record<string, string> = {}; dia.forEach((r: any) => { o[r.trabajador_id] = r.jornadas?.tareas?.clientes?.nombre || ''; }); return o; }, [dia]);
   const serviciosActivos = servicios.filter(s => s.activo);
-  const [ult, setUlt] = useState<any>(null);
+  const [ult, setUlt] = useState<any>(null); const [rk, setRk] = useState(0);
   const [prevId, setPrevId] = useState<string | null>(null); const [prevNota, setPrevNota] = useState('');
   useEffect(() => {
     if (!servicios.length) return;
@@ -153,8 +153,8 @@ function Contenido({ perfil }: { perfil: Perfil }) {
       if (l.error) throw new Error('La jornada se creó pero falló la asignación del equipo (' + l.error.message + '). Ábrela en la lista de abajo y asigna el equipo.');
       const { count } = await sb.from('jornada_trabajador').select('id', { count: 'exact', head: true }).eq('jornada_id', j.data.id).is('borrado_en', null);
       if (count !== todos.size) throw new Error('El servidor guardó ' + count + ' de ' + todos.size + ' trabajadores. Revisa la lista de abajo.');
-      setMsg({ t: 'ok', m: `Jornada creada ✔ ${srv.nombre}${f.proyecto_id ? ' (' + (proyectos.find(x => x.id === f.proyecto_id)?.nombre || '') + ')' : ''} · ${fechaLarga(f.fecha)} · ${todos.size} trabajadores. El jefe ya la ve.` });
-      setSel(new Set());
+      setMsg({ t: 'ok', m: `Tarea creada ✔ ${srv.nombre}${f.proyecto_id ? ' (' + (proyectos.find(x => x.id === f.proyecto_id)?.nombre || '') + ')' : ''} · ${fechaLarga(f.fecha)} · ${todos.size} trabajadores. El jefe ya la ve.` });
+      setSel(new Set()); setF(x => ({ servicio_id: '', modalidad: 'hora', cliente_id: '', fecha: x.fecha, jefe_id: '', proyecto_id: '' })); setUlt(null); setRk(k => k + 1); // formulario limpio para la siguiente tarea (se conserva solo la fecha)
       if (prevId) { await sb.from('trabajos_previstos').update({ estado: 'planificado' }).eq('id', prevId); setPrevId(null); setPrevNota(''); }
     } catch (er: any) { setMsg({ t: 'err', m: er.message }); }
     setBusy(false); cargar();
@@ -169,7 +169,7 @@ function Contenido({ perfil }: { perfil: Perfil }) {
     <h2 style={{ marginBottom: 10 }}>Planificar</h2>
     {prevId && <div className="msg ok">Preparando un trabajo previsto{prevNota ? ': ' + prevNota : ''}. Al crear la jornada se marcará como planificado.</div>}
     <form className="card" onSubmit={crear}>
-      <h3>Nueva jornada</h3>
+      <h3>Nueva tarea</h3>
       {msg && <div className={'msg ' + msg.t}>{msg.m}</div>}
       <div className="row">
         <div className="field"><label>Servicio</label><select required value={f.servicio_id} onChange={e => { const s = servicios.find(x => x.id === e.target.value); setF({ ...f, servicio_id: e.target.value, modalidad: s?.modalidad || 'hora' }); }}><option value="">— elegir —</option>{serviciosActivos.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}</select></div>
@@ -188,8 +188,8 @@ function Contenido({ perfil }: { perfil: Perfil }) {
       {f.modalidad !== 'hora' && <div className="muted" style={{ marginTop: 6 }}>Trabajo {MOD[f.modalidad]}: el jefe tendrá que indicar el total de {f.modalidad === 'cepa' ? 'cepas' : 'kg'} realizado para poder fichar.</div>}
       {ult && <div className="msg ok" style={{ marginTop: 10, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}><span>La última vez ({fechaLarga(ult.fecha)}): jefe {ult.jefe || '—'} y {ult.ids.length} trabajadores.</span><button type="button" className="btn btn-g" onClick={repetir}>↻ Repetir ese equipo</button></div>}
       <div style={{ marginTop: 12 }}><label>Trabajadores asignados</label>{jefeTrab && <div className="muted" style={{ marginBottom: 4 }}>El jefe de equipo cuenta siempre como trabajador de su jornada.</div>}
-        <Selector trabajadores={trabajadores} sel={sel} setSel={setSel} ocupados={ocupados} /></div>
-      <div style={{ marginTop: 12 }}><button className="btn btn-g" disabled={busy}>{busy ? 'Creando…' : 'Crear jornada'}</button></div>
+        <Selector key={rk} trabajadores={trabajadores} sel={sel} setSel={setSel} ocupados={ocupados} /></div>
+      <div style={{ marginTop: 12 }}><button className="btn btn-g" disabled={busy}>{busy ? 'Creando…' : 'Crear tarea'}</button></div>
     </form>
 
     <div className="card"><h3>Próximas jornadas</h3>

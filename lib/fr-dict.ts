@@ -92,7 +92,7 @@ export const FR: Record<string, string> = {
   'Trabajo por cepa: el jefe tendrá que indicar el total de cepas realizado para poder fichar.': "Travail au pied : le chef d'équipe devra indiquer le total de pieds réalisés pour pouvoir pointer.",
   'Trabajo por kg: el jefe tendrá que indicar el total de kg realizado para poder fichar.': "Travail au kg : le chef d'équipe devra indiquer le total de kg réalisés pour pouvoir pointer.",
   '¿Anular la jornada de {a} ({b})?': 'Annuler la journée de {a} ({b}) ?',
-  'Jornada creada ✔ {a} · {b} · {c} trabajadores. El jefe ya la ve.': "Journée créée ✔ {a} · {b} · {c} ouvriers. Le chef d'équipe la voit déjà.",
+  'Tarea creada ✔ {a} · {b} · {c} trabajadores. El jefe ya la ve.': "Tâche créée ✔ {a} · {b} · {c} ouvriers. Le chef d'équipe la voit déjà.",
   'No se puede quitar a alguien que el jefe ya confirmó.': "Impossible de retirer quelqu'un que le chef a déjà confirmé.",
   // Validar
   'Jornadas pendientes de validar': 'Journées à valider', 'Aprobar también para el portal del cliente': 'Approuver aussi pour le portail client',
@@ -175,6 +175,7 @@ export const FR: Record<string, string> = {
   '✍️ Fichar': '✍️ Pointer', '☰ Menú': '☰ Menu', '✕ Cerrar': '✕ Fermer', '— elige cliente —': '— choisissez le client —',
   'Ver las jornadas de todos los equipos': 'Voir les journées de toutes les équipes', 'Ver solo mis jornadas': 'Voir seulement mes journées',
   'El jefe de equipo cuenta siempre como trabajador de su jornada.': 'Le chef d\'équipe compte toujours comme travailleur de sa journée.',
+  'Nueva tarea': 'Nouvelle tâche', 'Crear tarea': 'Créer la tâche',
   'Copias automáticas en Google Drive': 'Sauvegardes automatiques sur Google Drive', 'Se hacen solas cada día en la carpeta «Copias ERP Basso» de contact@bassoviti.com (se guardan 120 días).': 'Elles se font automatiquement chaque jour dans le dossier « Copias ERP Basso » de contact@bassoviti.com (conservées 120 jours).', 'Todavía no hay ninguna.': 'Aucune pour le moment.',
   '💾 Hace más de 7 días que no descargas una copia de seguridad. Pulsa aquí para hacerla.': '💾 Cela fait plus de 7 jours que vous n\'avez pas téléchargé de sauvegarde. Cliquez ici pour la faire.',
   'Descarga todos los datos del ERP en un solo archivo. Hazla al menos una vez por semana y guárdala fuera del ERP. El archivo contiene datos personales y costes: no lo compartas ni lo subas a GitHub.': "Téléchargez toutes les données de l'ERP dans un seul fichier. Faites-le au moins une fois par semaine et conservez-le en dehors de l'ERP. Le fichier contient des données personnelles et des coûts : ne le partagez pas et ne le mettez pas sur GitHub.",
