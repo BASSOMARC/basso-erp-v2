@@ -97,7 +97,7 @@ function Contenido({ perfil }: { perfil: Perfil }) {
     const [a, b, c, d, e, pq] = await Promise.all([
       sb.from('servicios').select('*').is('borrado_en', null).order('nombre'),
       todas((x, z) => sb.from('clientes').select('id,nombre').is('borrado_en', null).order('nombre').range(x, z)),
-      sb.from('perfiles').select('user_id,nombre').or('rol.eq.jefe,es_jefe.eq.true').eq('activo', true).order('nombre'),
+      sb.from('perfiles').select('user_id,nombre,trabajador_id').or('rol.eq.jefe,es_jefe.eq.true').eq('activo', true).order('nombre'),
       todas((x, z) => sb.from('trabajadores').select('id,nombre').eq('estado', 'activo').is('borrado_en', null).order('nombre').range(x, z)),
       sb.from('jornadas').select('id,fecha,estado,perfiles:jefe_id(nombre),tareas(nombre,modalidad,clientes(nombre)),jornada_trabajador(trabajador_id,confirmado,borrado_en,trabajadores(nombre))').is('borrado_en', null).gte('fecha', hoy()).order('fecha').limit(60),
       sb.from('proyectos').select('id,cliente_id,nombre,unidad_avance,cantidad_objetivo').eq('estado', 'activo').is('borrado_en', null).order('nombre'),
@@ -127,12 +127,15 @@ function Contenido({ perfil }: { perfil: Perfil }) {
     const { data } = await sb.from('jornadas').select('fecha,jefe_id,perfiles:jefe_id(nombre),tareas!inner(cliente_id,servicio_id),jornada_trabajador(trabajador_id,borrado_en)').eq('tareas.cliente_id', f.cliente_id).eq('tareas.servicio_id', f.servicio_id).is('borrado_en', null).lt('fecha', f.fecha).order('fecha', { ascending: false }).limit(1);
     const u = data?.[0]; if (u) setUlt({ fecha: u.fecha, jefe_id: u.jefe_id, jefe: (u as any).perfiles?.nombre, ids: (u.jornada_trabajador || []).filter((l: any) => !l.borrado_en).map((l: any) => l.trabajador_id) });
   })(); }, [f.cliente_id, f.servicio_id, f.fecha]);
+  const jefeTrab: string | null = jefes.find((x: any) => x.user_id === f.jefe_id)?.trabajador_id || null;
+  useEffect(() => { if (jefeTrab) setSel(prev => (prev.has(jefeTrab) ? prev : new Set(prev).add(jefeTrab))); }, [jefeTrab]);
   const repetir = () => { if (!ult) return; setF(x => ({ ...x, jefe_id: ult.jefe_id || x.jefe_id })); setSel(new Set(ult.ids.filter((id: string) => trabajadores.some((t: any) => t.id === id)))); };
 
   async function crear(e: React.FormEvent) {
     e.preventDefault(); setMsg(null);
     if (!f.servicio_id || !f.cliente_id || !f.jefe_id) { setMsg({ t: 'err', m: 'Elige servicio, cliente y jefe de equipo' }); return; }
-    if (sel.size === 0) { setMsg({ t: 'err', m: 'Asigna al menos un trabajador' }); return; }
+    const todos = new Set(sel); if (jefeTrab) todos.add(jefeTrab); // el jefe cuenta siempre como trabajador
+    if (todos.size === 0) { setMsg({ t: 'err', m: 'Asigna al menos un trabajador' }); return; }
     setBusy(true);
     try {
       const srv = servicios.find(s => s.id === f.servicio_id);
@@ -146,11 +149,11 @@ function Contenido({ perfil }: { perfil: Perfil }) {
       }
       const j = await sb.from('jornadas').insert({ tarea_id, fecha: f.fecha, jefe_id: f.jefe_id }).select('id').single();
       if (j.error || !j.data) throw new Error(j.error?.message || 'No se pudo crear la jornada');
-      const l = await sb.from('jornada_trabajador').insert([...sel].map(id => ({ jornada_id: j.data.id, trabajador_id: id, asignado: true, confirmado: false, horas_normal: 0, horas_extra: 0, ausente: false })));
+      const resto = [...todos].filter(id => id !== jefeTrab); const l = resto.length ? await sb.from('jornada_trabajador').insert(resto.map(id => ({ jornada_id: j.data.id, trabajador_id: id, asignado: true, confirmado: false, horas_normal: 0, horas_extra: 0, ausente: false }))) : { error: null };
       if (l.error) throw new Error('La jornada se creó pero falló la asignación del equipo (' + l.error.message + '). Ábrela en la lista de abajo y asigna el equipo.');
       const { count } = await sb.from('jornada_trabajador').select('id', { count: 'exact', head: true }).eq('jornada_id', j.data.id).is('borrado_en', null);
-      if (count !== sel.size) throw new Error('El servidor guardó ' + count + ' de ' + sel.size + ' trabajadores. Revisa la lista de abajo.');
-      setMsg({ t: 'ok', m: `Jornada creada ✔ ${srv.nombre}${f.proyecto_id ? ' (' + (proyectos.find(x => x.id === f.proyecto_id)?.nombre || '') + ')' : ''} · ${fechaLarga(f.fecha)} · ${sel.size} trabajadores. El jefe ya la ve.` });
+      if (count !== todos.size) throw new Error('El servidor guardó ' + count + ' de ' + todos.size + ' trabajadores. Revisa la lista de abajo.');
+      setMsg({ t: 'ok', m: `Jornada creada ✔ ${srv.nombre}${f.proyecto_id ? ' (' + (proyectos.find(x => x.id === f.proyecto_id)?.nombre || '') + ')' : ''} · ${fechaLarga(f.fecha)} · ${todos.size} trabajadores. El jefe ya la ve.` });
       setSel(new Set());
       if (prevId) { await sb.from('trabajos_previstos').update({ estado: 'planificado' }).eq('id', prevId); setPrevId(null); setPrevNota(''); }
     } catch (er: any) { setMsg({ t: 'err', m: er.message }); }
@@ -184,7 +187,7 @@ function Contenido({ perfil }: { perfil: Perfil }) {
       </div>
       {f.modalidad !== 'hora' && <div className="muted" style={{ marginTop: 6 }}>Trabajo {MOD[f.modalidad]}: el jefe tendrá que indicar el total de {f.modalidad === 'cepa' ? 'cepas' : 'kg'} realizado para poder fichar.</div>}
       {ult && <div className="msg ok" style={{ marginTop: 10, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}><span>La última vez ({fechaLarga(ult.fecha)}): jefe {ult.jefe || '—'} y {ult.ids.length} trabajadores.</span><button type="button" className="btn btn-g" onClick={repetir}>↻ Repetir ese equipo</button></div>}
-      <div style={{ marginTop: 12 }}><label>Trabajadores asignados</label>
+      <div style={{ marginTop: 12 }}><label>Trabajadores asignados</label>{jefeTrab && <div className="muted" style={{ marginBottom: 4 }}>El jefe de equipo cuenta siempre como trabajador de su jornada.</div>}
         <Selector trabajadores={trabajadores} sel={sel} setSel={setSel} ocupados={ocupados} /></div>
       <div style={{ marginTop: 12 }}><button className="btn btn-g" disabled={busy}>{busy ? 'Creando…' : 'Crear jornada'}</button></div>
     </form>
