@@ -45,10 +45,12 @@ const ORGANIZADOR = 'https://bassomarc.github.io/organizador/';
 export default function Shell({ roles, children }: { roles: string[]; children: (p: Perfil) => React.ReactNode }) {
   const [perfil, setPerfil] = useState<Perfil | null>(null);
   const [err, setErr] = useState('');
+  const [abierto, setAbierto] = useState(false);
   const router = useRouter(); const path = usePathname();
   const { lang, t: t0 } = useT();
   const t = t0;
   const fr = perfil?.rol === 'cliente' || lang === 'fr';
+  useEffect(() => { setAbierto(false); }, [path]);
   useEffect(() => { activarTraductor(perfil?.rol === 'cliente' ? true : lang === 'fr'); });
   useEffect(() => {
     (async () => {
@@ -63,9 +65,15 @@ export default function Shell({ roles, children }: { roles: string[]; children: 
   }, []);
   if (err) return <div className="content"><div className="msg err">{err}</div><button className="btn" onClick={async () => { await sb.auth.signOut(); router.replace('/login'); }}>{t('logout')}</button></div>;
   if (!perfil) return <div className="content muted">{t('loading')}</div>;
+  const colapsable = perfil.rol === 'admin' || perfil.rol === 'secretaria';
+  const adminJefe = perfil.rol === 'admin' && !!perfil.es_jefe;
   return (<>
-    <div className="topbar">
+    <div className={'topbar' + (colapsable ? ' colapsable' : '') + (abierto ? ' abierto' : '')}>
       <div className="brand"><img src={LOGO} alt="Basso" /> Basso Services Viticoles</div>
+      {colapsable && <div className="movil-bar">
+        {adminJefe && <Link href="/fichaje" className="fichar-rapido">✍️ Fichar</Link>}
+        <button type="button" className="burger" aria-expanded={abierto} onClick={() => setAbierto(v => !v)}>{abierto ? '✕ Cerrar' : '☰ Menú'}</button>
+      </div>}
       <div className="nav">
         {(NAV[perfil.rol] || []).filter(x => !x[2]).map(([h, tx]) => <Link key={h} href={h} className={path === h ? 'active' : ''}>{perfil.rol === 'jefe' ? t('myDays') : tx}</Link>)}
         {Array.from(new Set((NAV[perfil.rol] || []).filter(x => x[2]).map(x => x[2]!))).map(g => {

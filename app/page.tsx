@@ -8,8 +8,8 @@ export default function Home() {
   useEffect(() => { (async () => {
     const { data: { session } } = await sb.auth.getSession();
     if (!session) return router.replace('/login');
-    const { data } = await sb.from('perfiles').select('rol').eq('user_id', session.user.id).maybeSingle();
-    router.replace(data ? HOME[data.rol] : '/login');
+    const { data } = await sb.from('perfiles').select('rol,es_jefe').eq('user_id', session.user.id).maybeSingle();
+    router.replace(data ? (data.rol === 'admin' && data.es_jefe && window.innerWidth <= 640 ? '/fichaje' : HOME[data.rol]) : '/login');
   })(); }, []);
   return <div className="content muted">Cargando…</div>;
 }

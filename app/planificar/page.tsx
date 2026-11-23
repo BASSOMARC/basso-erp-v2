@@ -174,7 +174,7 @@ function Contenido({ perfil }: { perfil: Perfil }) {
         <div className="field"><label>Cliente</label><select required value={f.cliente_id} onChange={e => setF({ ...f, cliente_id: e.target.value, proyecto_id: '' })}><option value="">— elegir —</option>{clientes.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}</select></div>
         <div className="field"><label>Proyecto (opcional)</label>
           <select value={f.proyecto_id} disabled={!f.cliente_id} onChange={e => { const pr = proyectos.find(x => x.id === e.target.value); setF({ ...f, proyecto_id: e.target.value, modalidad: pr ? (pr.unidad_avance === 'cepas' ? 'cepa' : pr.unidad_avance === 'kg' ? 'kg' : f.modalidad) : f.modalidad }); }}>
-            <option value="">{!f.cliente_id ? '— primero elige el cliente —' : '— trabajo suelto, sin proyecto —'}</option>
+            <option value="">{!f.cliente_id ? '— elige cliente —' : '— trabajo suelto, sin proyecto —'}</option>
             {proyectos.filter(x => x.cliente_id === f.cliente_id).map(x => <option key={x.id} value={x.id}>{x.nombre}</option>)}
           </select>
           {f.cliente_id && !proyectos.some(x => x.cliente_id === f.cliente_id) && <div className="muted" style={{ marginTop: 4 }}>Este cliente no tiene proyectos activos. <Link href="/proyectos">Crear un proyecto →</Link></div>}

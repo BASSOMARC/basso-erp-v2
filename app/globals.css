@@ -122,3 +122,20 @@ textarea{font-size:16px}
 .aviso-i{color:#3a2e00;text-decoration:none;font-size:14px;padding:4px 0}
 .aviso-i:hover{text-decoration:underline}
 .aviso-i.late{color:var(--r);font-weight:600}
+
+/* menú plegable en móvil (admin / secretaria) */
+.movil-bar,.burger,.fichar-rapido{display:none}
+@media(max-width:640px){
+  .topbar.colapsable{align-items:center}
+  .topbar.colapsable .movil-bar{display:flex;gap:8px;align-items:center;width:100%}
+  .topbar.colapsable .movil-bar .burger,.topbar.colapsable .movil-bar .fichar-rapido{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 16px;border-radius:var(--radius);font-size:15px;font-weight:700;border:1px solid var(--gold);cursor:pointer;text-decoration:none}
+  .topbar.colapsable .movil-bar .burger{background:rgba(255,255,255,.15);color:#fff;flex:1}
+  .topbar.colapsable .movil-bar .fichar-rapido{background:var(--gold);color:#3b2a00;flex:1}
+  .topbar.colapsable .nav,.topbar.colapsable .who{display:none}
+  .topbar.colapsable.abierto .nav{display:flex;flex-direction:column;width:100%}
+  .topbar.colapsable.abierto .who{display:flex}
+  .topbar.colapsable .nav a,.topbar.colapsable .navg summary{padding:12px;font-size:15px}
+  .topbar.colapsable .navmenu{position:static;margin:2px 0 6px;box-shadow:none;border:0;background:rgba(255,255,255,.1)}
+  .topbar.colapsable .navmenu a{color:#fff!important}
+  .topbar.colapsable .navmenu a.active{background:var(--gold);color:#3b2a00!important}
+}
