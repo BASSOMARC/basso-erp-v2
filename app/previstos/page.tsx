@@ -20,7 +20,7 @@ function Contenido() {
       const [cl, sv, jf, tp] = await Promise.all([
         todas((a, b) => sb.from('clientes').select('id,nombre').is('borrado_en', null).order('nombre').range(a, b)),
         sb.from('servicios').select('id,nombre,activo').is('borrado_en', null).eq('activo', true).order('nombre'),
-        sb.from('perfiles').select('user_id,nombre').eq('rol', 'jefe').eq('activo', true).order('nombre'),
+        sb.from('perfiles').select('user_id,nombre').or('rol.eq.jefe,es_jefe.eq.true').eq('activo', true).order('nombre'),
         todas((a, b) => sb.from('trabajos_previstos').select('*').is('borrado_en', null).order('fecha_inicio').range(a, b)),
       ]);
       setClientes(cl); setServicios(sv.data || []); setJefes(jf.data || []); setRows(tp);

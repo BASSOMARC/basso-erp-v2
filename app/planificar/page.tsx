@@ -97,7 +97,7 @@ function Contenido({ perfil }: { perfil: Perfil }) {
     const [a, b, c, d, e, pq] = await Promise.all([
       sb.from('servicios').select('*').is('borrado_en', null).order('nombre'),
       todas((x, z) => sb.from('clientes').select('id,nombre').is('borrado_en', null).order('nombre').range(x, z)),
-      sb.from('perfiles').select('user_id,nombre').eq('rol', 'jefe').eq('activo', true).order('nombre'),
+      sb.from('perfiles').select('user_id,nombre').or('rol.eq.jefe,es_jefe.eq.true').eq('activo', true).order('nombre'),
       todas((x, z) => sb.from('trabajadores').select('id,nombre').eq('estado', 'activo').is('borrado_en', null).order('nombre').range(x, z)),
       sb.from('jornadas').select('id,fecha,estado,perfiles:jefe_id(nombre),tareas(nombre,modalidad,clientes(nombre)),jornada_trabajador(trabajador_id,confirmado,borrado_en,trabajadores(nombre))').is('borrado_en', null).gte('fecha', hoy()).order('fecha').limit(60),
       sb.from('proyectos').select('id,cliente_id,nombre,unidad_avance,cantidad_objetivo').eq('estado', 'activo').is('borrado_en', null).order('nombre'),

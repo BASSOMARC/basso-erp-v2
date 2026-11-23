@@ -182,14 +182,17 @@ function Contenido({ perfil }: { perfil: Perfil }) {
   const { t, lang } = useT();
   const [fecha, setFecha] = useState(hoy());
   const [jornadas, setJornadas] = useState<any[] | null>(null); const [trabajadores, setTrabajadores] = useState<any[]>([]); const [prox, setProx] = useState<Record<string, number>>({}); const [err, setErr] = useState('');
+  const adminJefe = perfil.rol === 'admin' && !!perfil.es_jefe; const [soloMias, setSoloMias] = useState(true);
   const cargar = useCallback(async () => {
     setJornadas(null); setErr('');
-    const { data, error } = await sb.from('jornadas')
+    let q = sb.from('jornadas')
       .select('id,fecha,estado,observaciones,avance_pct,perfiles:jefe_id(nombre),tareas(nombre,temporada,modalidad,proyecto_id,proyectos(nombre,unidad_avance,cantidad_objetivo),clientes(nombre)),jornada_trabajador(trabajador_id,horas_normal,horas_extra,ausente,funcion,borrado_en,confirmado,asignado,trabajadores(nombre,funcion_habitual)),jornada_cantidad(unidad,cantidad,borrado_en),incidencias(id,tipo,descripcion,estado,trabajador_id,borrado_en)')
       .eq('fecha', fecha).is('borrado_en', null).order('creado_en');
+    if (adminJefe && soloMias) q = q.eq('jefe_id', perfil.user_id);
+    const { data, error } = await q;
     if (error) { setErr(error.message); return; }
     setJornadas(data || []);
-  }, [fecha]);
+  }, [fecha, adminJefe, soloMias, perfil.user_id]);
   useEffect(() => { cargar(); }, [cargar]);
   useEffect(() => { sb.from('trabajadores').select('id,nombre,funcion_habitual').eq('estado', 'activo').is('borrado_en', null).order('nombre').then(({ data }) => setTrabajadores(data || [])); }, []);
   useEffect(() => { (async () => {
@@ -197,7 +200,8 @@ function Contenido({ perfil }: { perfil: Perfil }) {
     const o: Record<string, number> = {}; (data || []).forEach((r: any) => { o[r.fecha] = (o[r.fecha] || 0) + 1; }); setProx(o);
   })(); }, [jornadas]);
   return (<>
-    <h2 style={{ marginBottom: 10 }}>{perfil.rol === 'jefe' ? t('myDays') : t('pointage')}</h2>
+    <h2 style={{ marginBottom: 10 }}>{perfil.rol === 'jefe' || (adminJefe && soloMias) ? t('myDays') : t('pointage')}</h2>
+    {adminJefe && <div style={{ marginBottom: 10 }}><button type="button" className="btn" onClick={() => setSoloMias(v => !v)}>{soloMias ? 'Ver las jornadas de todos los equipos' : 'Ver solo mis jornadas'}</button></div>}
     <div className="row" style={{ marginBottom: 12 }}>
       {[[-1, 'yesterday'], [0, 'today'], [1, 'tomorrow']].map(([n, k]: any) => <button key={k} className={'btn btn-lg' + (fecha === mas(hoy(), n) ? ' btn-g' : '')} onClick={() => setFecha(mas(hoy(), n))}>{t(k)}</button>)}
       <div className="field" style={{ maxWidth: 170 }}><input type="date" aria-label={t('otherDay')} value={fecha} onChange={e => setFecha(e.target.value)} /></div>
