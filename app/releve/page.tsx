@@ -3,27 +3,17 @@ import { useEffect, useMemo, useState } from 'react';
 import Shell from '@/lib/Shell';
 import { loc } from '@/lib/i18n';
 import { sb, hoy, todas } from '@/lib/supabase';
-import { LOGO_RELEVE } from '@/lib/logo-releve';
+import ReleveDoc, { MESES_FR, nf, fechaCorta, periodoFr, type Datos } from '@/lib/ReleveDoc';
 
-/* Datos de la empresa para el documento (se imprime siempre en francés) */
-const EMPRESA = {
-  nombre: 'BASSO SERVICES VITICOLES', forma: 'SARL',
-  direccion: '189 avenue du Maréchal Foch, 33500 Libourne',
-  siret: '908 479 975 00041', rcs: 'R.C.S. Libourne 908 479 975', tva: 'FR91908479975',
-  email: 'contact@bassoviti.com', tel: '06 38 73 39 50',
-};
-const MESES_FR = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
 const mesIso = (y: number, m: number) => [`${y}-${String(m).padStart(2, '0')}-01`, m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`];
-const nf = (n: number) => n.toLocaleString('fr-FR', { maximumFractionDigits: 2 });
-const hh = (n: number) => nf(n) + ' h';
-const fechaFr = (iso: string) => { const d = new Date(iso + 'T12:00:00'); const dd = d.toLocaleDateString('fr-FR', { weekday: 'short' }).replace('.', ''); return dd + ' ' + iso.slice(8, 10) + '/' + iso.slice(5, 7) + '/' + iso.slice(0, 4); };
 
-function Contenido() {
+function Contenido({ rol }: { rol: string }) {
   const d = new Date();
   const [clientes, setClientes] = useState<any[]>([]); const [cid, setCid] = useState('');
   const [y, setY] = useState(d.getFullYear()); const [m, setM] = useState(d.getMonth() + 1);
   const [borrador, setBorrador] = useState(false);
   const [filas, setFilas] = useState<any[] | null>(null); const [err, setErr] = useState('');
+  const [rv, setRv] = useState<any | null>(null); const [aviso, setAviso] = useState(''); const [ocupado, setOcupado] = useState(false); const [rk, setRk] = useState(0);
 
   useEffect(() => { sb.from('clientes').select('id,nombre').is('borrado_en', null).order('nombre').then(({ data }) => setClientes(data || [])); }, []);
   useEffect(() => { (async () => {
@@ -65,8 +55,24 @@ function Contenido() {
     return { lineas, totalH, jours, hayBorrador };
   }, [filas, borrador]);
 
+  useEffect(() => { (async () => {
+    setRv(null); if (!cid) return;
+    const { data } = await sb.from('releves').select('*').eq('cliente_id', cid).eq('mes', mesIso(y, m)[0]).is('borrado_en', null).maybeSingle();
+    setRv(data || null);
+  })(); }, [cid, y, m, rk]);
+  const actuar = async (fn: string, args: any, ok: string) => {
+    setOcupado(true); setAviso('');
+    const { error } = await sb.rpc(fn, args);
+    setOcupado(false);
+    if (error) { setAviso('❌ ' + error.message); return; }
+    setAviso(ok); setRk(k => k + 1);
+  };
+  const mes1 = mesIso(y, m)[0];
   const cliente = clientes.find(c => c.id === cid);
-  const periodo = MESES_FR[m - 1].charAt(0).toUpperCase() + MESES_FR[m - 1].slice(1) + ' ' + y;
+  const periodo = periodoFr(y, m);
+  const snap = rv?.datos as (Datos & { totalH: number }) | undefined;
+  const difiere = !!(rv && doc && !borrador && snap && (Math.abs(snap.totalH - doc.totalH) > 0.001 || snap.lineas.length !== doc.lineas.length));
+  const puedeRevisar = !!(doc && doc.lineas.length && !doc.hayBorrador && !borrador && rv?.estado !== 'publicado');
 
   return (<>
     <div className="noprint">
@@ -81,28 +87,25 @@ function Contenido() {
       </div>
       {err && <div className="msg err">{err}</div>}
       {cid && !filas && !err && <div className="muted">Cargando…</div>}
+      {cid && filas && <div className="card">
+        <b>Validación del relevé · {periodo}</b>
+        <div className="muted" style={{ margin: '4px 0 8px' }}>
+          {!rv && 'Sin revisar. 1.º la secretaria (o el admin) lo revisa; 2.º el admin lo publica y el cliente lo ve en su espacio.'}
+          {rv?.estado === 'revisado' && `✔ Revisado el ${fechaCorta(rv.revisado_en.slice(0, 10))}. Falta la validación final del administrador.`}
+          {rv?.estado === 'publicado' && `✅ Publicado al cliente el ${fechaCorta(rv.publicado_en.slice(0, 10))}. El cliente lo ve en su espacio.`}
+        </div>
+        {difiere && <div className="msg err">⚠ Las horas validadas han cambiado desde la revisión. Se publicaría la versión revisada ({nf(snap!.totalH)} h); la actual suma {nf(doc!.totalH)} h. Vuelve a revisar si quieres actualizarla.</div>}
+        <div className="row">
+          {rv?.estado !== 'publicado' && <button className="btn" disabled={!puedeRevisar || ocupado} onClick={() => actuar('releve_revisar', { p_cliente: cid, p_mes: mes1, p_datos: { lineas: doc!.lineas.map(({ fecha, prest, proy, nb, total, detalle }) => ({ fecha, prest, proy, nb, total, detalle })), totalH: doc!.totalH, jours: doc!.jours } }, '✔ Relevé revisado.')}>{rv ? '🔄 Volver a revisar' : '✔ Marcar como revisado'}</button>}
+          {rol === 'admin' && rv?.estado === 'revisado' && <button className="btn btn-g" disabled={ocupado} onClick={() => { if (confirm('¿Publicar este relevé al cliente? Lo verá en su espacio.')) actuar('releve_publicar', { p_cliente: cid, p_mes: mes1 }, '✅ Publicado al cliente.'); }}>✅ Validar y publicar al cliente</button>}
+          {rol === 'admin' && rv && <button className="btn" disabled={ocupado} onClick={() => { if (confirm('¿Retirar este relevé? El cliente dejará de verlo y habrá que revisarlo de nuevo.')) actuar('releve_reabrir', { p_cliente: cid, p_mes: mes1 }, 'Relevé reabierto.'); }}>↩ Reabrir</button>}
+        </div>
+        {!puedeRevisar && rv?.estado !== 'publicado' && <div className="muted" style={{ marginTop: 6 }}>Para revisar: quita el borrador y que haya jornadas validadas ese mes.</div>}
+        {aviso && <div className="msg" style={{ marginTop: 6 }}>{aviso}</div>}
+      </div>}
     </div>
 
-    {cid && doc && <div className="releve">
-      <div className="rv-head">
-        <img src={LOGO_RELEVE} alt="Basso Services Viticoles" className="rv-logo" />
-        <div className="rv-emp">
-          <b>{EMPRESA.forma} {EMPRESA.nombre}</b><br />{EMPRESA.direccion}<br />
-          SIRET {EMPRESA.siret} · {EMPRESA.rcs}<br />N° TVA intracommunautaire {EMPRESA.tva}<br />{EMPRESA.email} · Tél. {EMPRESA.tel}
-        </div>
-      </div>
-      <h1 className="rv-tit">RELEVÉ D'HEURES</h1>
-      <div className="rv-meta"><div><span>Client</span><b>{cliente?.nombre}</b></div><div><span>Période</span><b>{periodo}</b></div><div><span>Édité le</span><b>{hoy().slice(8, 10) + '/' + hoy().slice(5, 7) + '/' + hoy().slice(0, 4)}</b></div></div>
-      {doc.hayBorrador && <div className="rv-borr">BROUILLON — contient des journées non validées. Ne pas envoyer au client.</div>}
-      {doc.lineas.length === 0 ? <div className="rv-vacio">Aucune journée validée pour cette période.</div> : <>
-        <table className="rv-tab">
-          <thead><tr><th>Date</th><th>Prestation</th><th className="c">Nb ouvriers</th><th className="c">Heures par ouvrier</th><th className="r">Total du jour</th></tr></thead>
-          <tbody>{doc.lineas.map((r, i) => <tr key={i}><td>{fechaFr(r.fecha)}</td><td>{r.prest}{r.proy && <div className="rv-sub">{r.proy}</div>}</td><td className="c">{r.nb}</td><td className="c">{r.detalle}</td><td className="r"><b>{hh(r.total)}</b></td></tr>)}</tbody>
-          <tfoot><tr><td colSpan={4}>TOTAL GÉNÉRAL DES HEURES — {doc.jours} jour{doc.jours > 1 ? 's' : ''} d'intervention</td><td className="r">{hh(doc.totalH)}</td></tr></tfoot>
-        </table>
-        <div className="rv-firmas"><div><span>Basso Services Viticoles</span></div><div><span>Le client — bon pour accord (date, signature, cachet)</span></div></div>
-      </>}
-    </div>}
+    {cid && doc && <ReleveDoc cliente={cliente?.nombre || ''} periodo={periodo} editado={fechaCorta(hoy())} d={doc} />}
   </>);
 }
-export default function Page() { return <Shell roles={['admin', 'secretaria']}>{() => <Contenido />}</Shell>; }
+export default function Page() { return <Shell roles={['admin', 'secretaria']}>{p => <Contenido rol={p.rol} />}</Shell>; }
