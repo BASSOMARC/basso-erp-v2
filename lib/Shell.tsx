@@ -9,8 +9,8 @@ export const LOGO = 'https://i.postimg.cc/bvDHmp47/WhatsApp-Image-2026-05-14-at-
 const NAV: Record<string, [string, string, string?][]> = {
   admin: [['/dashboard', 'Resumen'], ['/calendario', 'Calendario'], ['/planificar', 'Planificar'], ['/previstos', 'Trabajos previstos'], ['/fichaje', 'Fichaje'], ['/validar', 'Validar'], ['/horas', 'Control de horas'],
     ['/incidencias', 'Incidencias', 'Equipo y clientes'], ['/clientes', 'Clientes', 'Equipo y clientes'], ['/trabajadores', 'Trabajadores', 'Equipo y clientes'], ['/proyectos', 'Proyectos', 'Equipo y clientes'], ['/bitacora', 'Bitácora', 'Equipo y clientes'],
-    ['/costes', 'Costes y tarifas', 'Dinero'], ['/rentabilidad', 'Rentabilidad', 'Dinero'], ['/copia', 'Copia de seguridad', 'Dinero']],
-  secretaria: [['/dashboard', 'Resumen'], ['/calendario', 'Calendario'], ['/planificar', 'Planificar'], ['/previstos', 'Trabajos previstos'], ['/horas', 'Horas'], ['/incidencias', 'Incidencias'], ['/clientes', 'Clientes', 'Gestión'], ['/trabajadores', 'Trabajadores', 'Gestión'], ['/proyectos', 'Proyectos', 'Gestión'], ['/bitacora', 'Bitácora', 'Gestión']],
+    ['/costes', 'Costes y tarifas', 'Dinero'], ['/rentabilidad', 'Rentabilidad', 'Dinero'], ['/releve', "Relevé d'heures", 'Dinero'], ['/copia', 'Copia de seguridad', 'Dinero']],
+  secretaria: [['/dashboard', 'Resumen'], ['/calendario', 'Calendario'], ['/planificar', 'Planificar'], ['/previstos', 'Trabajos previstos'], ['/horas', 'Horas'], ['/releve', "Relevé d'heures"], ['/incidencias', 'Incidencias'], ['/clientes', 'Clientes', 'Gestión'], ['/trabajadores', 'Trabajadores', 'Gestión'], ['/proyectos', 'Proyectos', 'Gestión'], ['/bitacora', 'Bitácora', 'Gestión']],
   jefe: [['/fichaje', 'Mis jornadas']],
   cliente: [['/portal', 'Espace client']],
 };

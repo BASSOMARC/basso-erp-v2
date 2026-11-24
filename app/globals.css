@@ -139,3 +139,33 @@ textarea{font-size:16px}
   .topbar.colapsable .navmenu a{color:#fff!important}
   .topbar.colapsable .navmenu a.active{background:var(--gold);color:#3b2a00!important}
 }
+
+/* Relevé d'heures: documento A4 blanco */
+.releve{background:#fff;color:#111;max-width:794px;margin:12px auto;padding:34px 38px;border:1px solid #ddd;border-radius:6px;font-size:13px}
+.rv-head{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;border-bottom:2px solid #7b1e2e;padding-bottom:14px}
+.rv-logo{height:112px;width:auto}
+.rv-emp{text-align:right;font-size:11.5px;line-height:1.55;color:#333}
+.rv-tit{font-size:22px;letter-spacing:.12em;text-align:center;margin:20px 0 12px;color:#7b1e2e}
+.rv-meta{display:flex;gap:28px;justify-content:center;margin-bottom:14px}
+.rv-meta span{display:block;font-size:10.5px;text-transform:uppercase;color:#777;letter-spacing:.06em}
+.rv-meta b{font-size:14px}
+.rv-borr{background:#fde8e8;color:#b00020;border:1px solid #b00020;padding:6px 10px;text-align:center;font-weight:700;margin-bottom:10px}
+.rv-vacio{text-align:center;color:#777;padding:30px}
+.rv-tab{width:100%;border-collapse:collapse}
+.rv-tab th{background:#7b1e2e;color:#fff;font-size:11.5px;text-align:left;padding:7px 8px}
+.rv-tab td{padding:6px 8px;border-bottom:1px solid #e3e3e3;vertical-align:top}
+.rv-tab .c{text-align:center}.rv-tab .r{text-align:right}
+.rv-tab th.c{text-align:center}.rv-tab th.r{text-align:right}
+.rv-sub{font-size:10.5px;color:#777}
+.rv-tab tfoot td{border-top:2px solid #7b1e2e;border-bottom:0;font-weight:800;padding-top:10px;font-size:14px}
+.rv-firmas{display:flex;gap:30px;margin-top:34px}
+.rv-firmas div{flex:1;border:1px solid #bbb;height:90px;padding:6px 8px;border-radius:4px}
+.rv-firmas span{font-size:10.5px;color:#666}
+@media print{
+  @page{size:A4;margin:12mm}
+  body{background:#fff!important}
+  .topbar,.aviso,.noprint{display:none!important}
+  .content{padding:0!important;max-width:none!important;margin:0!important}
+  .releve{border:0;border-radius:0;margin:0;padding:0;max-width:none;box-shadow:none}
+  .rv-tab tr{break-inside:avoid}
+}
