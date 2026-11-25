@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Shell from '@/lib/Shell';
 import { loc } from '@/lib/i18n';
 import { sb, hoy, todas } from '@/lib/supabase';
+import InformeFermages from './InformeFermages';
 
 type Msg = { t: 'ok' | 'err'; m: string } | null;
 const eur = (n: number) => n.toLocaleString(loc(), { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' €';
@@ -22,15 +23,16 @@ function Mensual() {
     try {
       const [a, b] = mes(y, m);
       const emb = 'tareas(modalidad,cliente_id,servicios(nombre),clientes(nombre,no_facturable))';
-      const [lin, cant, coste, prima, tar] = await Promise.all([
-        todas((x, z) => sb.from('jornada_trabajador').select(`horas_normal,horas_extra,funcion,trabajadores(tipo),jornadas!inner(id,fecha,estado,${emb})`).is('borrado_en', null).eq('confirmado', true).eq('ausente', false).gte('jornadas.fecha', a).lt('jornadas.fecha', b).order('id').range(x, z)),
+      const [lin, cant, coste, prima, tar, rec] = await Promise.all([
+        todas((x, z) => sb.from('jornada_trabajador').select(`id,horas_normal,horas_extra,funcion,trabajadores(tipo),jornadas!inner(id,fecha,estado,${emb})`).is('borrado_en', null).eq('confirmado', true).eq('ausente', false).gte('jornadas.fecha', a).lt('jornadas.fecha', b).order('id').range(x, z)),
         todas((x, z) => sb.from('jornada_cantidad').select(`unidad,cantidad,jornadas!inner(id,fecha,estado,${emb})`).is('borrado_en', null).gte('jornadas.fecha', a).lt('jornadas.fecha', b).order('id').range(x, z)),
         sb.from('coste_hora').select('*').order('desde', { ascending: false }),
         sb.from('prima_porteur').select('*').order('desde', { ascending: false }),
         todas((x, z) => sb.from('tarifas').select('*').order('desde', { ascending: false }).range(x, z)),
+        todas((x, z) => sb.from('jt_recargo').select('id,h_recargo').gte('fecha', a).lt('fecha', b).order('id').range(x, z)),
       ]);
       if (coste.error) throw coste.error; if (prima.error) throw prima.error;
-      setData({ lin, cant, coste: coste.data || [], prima: prima.data || [], tar });
+      setData({ lin, cant, coste: coste.data || [], prima: prima.data || [], tar, rec: new Map(rec.map((x: any) => [x.id, Number(x.h_recargo)])) });
     } catch (e: any) { setErr(e.message); }
   })(); }, [y, m]);
 
@@ -46,7 +48,7 @@ function Mensual() {
       const s = (c.serv[serv] ||= { horas: 0, coste: 0, ingreso: 0 }); return { c, s, cli, serv, t }; };
     data.lin.forEach((r: any) => { const j = r.jornadas; if (soloVal && j.estado !== 'validada') return; const h = Number(r.horas_normal) + Number(r.horas_extra); const { c, s, cli, serv, t } = fila(j);
       const ch = vig(data.coste.filter((x: any) => x.tipo_trabajador === (r.trabajadores?.tipo || 'peon')), j.fecha) || vig(data.coste.filter((x: any) => x.tipo_trabajador === 'peon'), j.fecha); if (!ch) sinCoste++;
-      let cost = h * Number(ch?.euros_hora || 0);
+      let cost = (h + (data.rec.get(r.id) || 0)) * Number(ch?.euros_hora || 0);
       if (r.funcion === 'porteur') cost += Number(vig(data.prima, j.fecha)?.euros_dia || 0);
       let ing = 0; if (!c.nf && (t?.modalidad === 'hora' || !t?.modalidad)) { const p = precio(cli, serv, 'hora', j.fecha); if (!p) sinTarifa++; ing = h * Number(p?.precio || 0); }
       c.horas += h; s.horas += h; c.coste += cost; s.coste += cost; c.ingreso += ing; s.ingreso += ing; });
@@ -183,14 +185,15 @@ function Fermages() {
 }
 
 function Contenido() {
-  const [tab, setTab] = useState<'mes' | 'ferm'>('mes');
+  const [tab, setTab] = useState<'mes' | 'ferm' | 'inf'>('mes');
   return (<>
     <h2 style={{ marginBottom: 4 }}>Rentabilidad</h2>
-    <div className="muted" style={{ marginBottom: 10 }}>Solo administradores. Coste = horas × coste por hora vigente + prima de porteur.</div>
+    <div className="muted" style={{ marginBottom: 10 }}>Solo administradores. Coste = horas × coste por hora vigente (con recargo de horas extra: +25 % de 35 a 40 h y +50 % de 40 a 45 h por semana) + prima de porteur.</div>
     <div className="row" style={{ marginBottom: 12 }}>
       <button className={'btn' + (tab === 'mes' ? ' btn-g' : '')} onClick={() => setTab('mes')}>Mensual · clientes que se facturan</button>
-      <button className={'btn' + (tab === 'ferm' ? ' btn-g' : '')} onClick={() => setTab('ferm')}>Fermages · campaña</button></div>
-    {tab === 'mes' ? <Mensual /> : <Fermages />}
+      <button className={'btn' + (tab === 'ferm' ? ' btn-g' : '')} onClick={() => setTab('ferm')}>Fermages · campaña</button>
+      <button className={'btn' + (tab === 'inf' ? ' btn-g' : '')} onClick={() => setTab('inf')}>Informe de costes · Excel</button></div>
+    {tab === 'mes' ? <Mensual /> : tab === 'ferm' ? <Fermages /> : <InformeFermages />}
   </>);
 }
 export default function Page() { return <Shell roles={['admin']}>{() => <Contenido />}</Shell>; }

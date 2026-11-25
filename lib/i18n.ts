@@ -66,6 +66,8 @@ const D: Record<string, { es: string; fr: string }> = {
   qtyMismatch: { es: 'La cantidad no se guardó correctamente.', fr: "La quantité n'a pas été enregistrée correctement." },
   notesMismatch: { es: 'Las observaciones no se guardaron correctamente.', fr: "Les notes n'ont pas été enregistrées correctement." },
   needPres: { es: 'Faltan {n} trabajador(es) por marcar como presentes o ausentes.', fr: "Il reste {n} ouvrier(s) à marquer présent ou absent." },
+  dayLimit: { es: 'Atención: sumando las otras tareas de hoy, estos trabajadores pasan de 10 h en el día:\n{n}\n¿Seguro que las horas están bien repartidas entre las tareas? Si aceptas, se guarda tal cual.', fr: "Attention : avec les autres tâches du jour, ces ouvriers dépassent 10 h dans la journée :\n{n}\nLes heures sont-elles bien réparties entre les tâches ? Si vous acceptez, c'est enregistré tel quel." },
+  weekLimit: { es: 'Atención: estos trabajadores pasarían de 45 h esta semana (no se puede pasar de 45 h):\n{n}\n¿Guardar igualmente?', fr: "Attention : ces ouvriers dépasseraient 45 h cette semaine (on ne peut pas dépasser 45 h) :\n{n}\nEnregistrer quand même ?" },
   presNoHours: { es: 'Hay trabajadores presentes sin horas.', fr: "Des ouvriers présents n'ont pas d'heures." },
   needQtyV: { es: 'Esta jornada es por cepa: indica el total realizado.', fr: 'Cette journée est au pied : indiquez le total réalisé.' }, needQtyK: { es: 'Esta jornada es por kg: indica el total realizado.', fr: 'Cette journée est au kg : indiquez le total réalisé.' },
   cantSend: { es: 'No se pudo fichar: ', fr: "Impossible de valider : " }, noChanges: { es: 'sin cambios', fr: 'aucun changement' },

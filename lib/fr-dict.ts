@@ -190,4 +190,5 @@ export const FR: Record<string, string> = {
   'Relevé reabierto.': 'Relevé rouvert.',
   'Sin revisar. 1.º la secretaria (o el admin) lo revisa; 2.º el admin lo publica y el cliente lo ve en su espacio.': "Non vérifié. 1) le secrétariat (ou l'admin) le vérifie ; 2) l'admin le publie et le client le voit dans son espace.",
   'Para revisar: quita el borrador y que haya jornadas validadas ese mes.': 'Pour vérifier : décochez le brouillon et il faut des journées validées ce mois-là.',
+  'No se puede pasar de 45 h.': 'Il est interdit de dépasser 45 h.',
 };

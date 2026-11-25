@@ -96,6 +96,15 @@ function Jornada({ j, trabajadores, onChange }: any) {
     if (lineas.some(l => l.est === 'pres' && num(l.h) + num(l.he) <= 0)) { setMsg({ t: 'err', m: t('presNoHours') }); return; }
     if (porPct && (pct === '' || num(pct) <= 0)) { setMsg({ t: 'err', m: t('missPct') }); return; }
     if (porUnidad && num(cant) <= 0) { setMsg({ t: 'err', m: t(modalidad === 'cepa' ? 'needQtyV' : 'needQtyK') }); return; }
+    {
+      const pres = lineas.filter(l => l.est === 'pres');
+      const { data: oh } = await sb.rpc('horas_otras_jornadas', { p_fecha: j.fecha, p_jornada: j.id, p_trabajadores: pres.map(l => l.trabajador_id) });
+      const tot = (oh || []).map((o: any) => { const l = pres.find(x => x.trabajador_id === o.trabajador_id); const h = l ? num(l.h) + num(l.he) : 0; return { n: o.nombre, dia: Number(o.horas_dia) + h, sem: Number(o.horas_semana) + h, otras: Number(o.horas_dia) }; });
+      const d = tot.filter((x: any) => x.dia > 10); const w = tot.filter((x: any) => x.sem > 45);
+      const fmt = (x: any, k: string) => `• ${x.n}: ${Math.round(x[k] * 100) / 100} h`;
+      if (d.length && !confirm(t('dayLimit', { n: d.map((x: any) => fmt(x, 'dia')).join('\n') }))) return;
+      if (w.length && !confirm(t('weekLimit', { n: w.map((x: any) => fmt(x, 'sem')).join('\n') }))) return;
+    }
     if (!(await guardar())) return;
     setBusy(true);
     const { data, error } = await sb.from('jornadas').update({ estado: 'fichada' }).eq('id', j.id).select('id,estado');

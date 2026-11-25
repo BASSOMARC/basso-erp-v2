@@ -32,9 +32,20 @@ function Avisos({ rol }: { rol: string }) {
     const u = data?.[0]?.creado_en;
     setDV(!u || (Date.now() - new Date(u).getTime()) / 864e5 > 3);
   })(); }, [rol]);
+  const [exceso, setEx] = useState<any[]>([]); const [dia, setDia] = useState<any[]>([]);
+  useEffect(() => { if (rol !== 'admin' && rol !== 'secretaria') return; (async () => {
+    const d = new Date(Date.now() - 14 * 864e5 - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+    const { data, error } = await sb.from('horas_semana').select('nombre,semana,horas').gte('semana', d).gt('horas', 45).order('semana', { ascending: false });
+    if (!error) setEx(data || []);
+    const d2 = new Date(Date.now() - 7 * 864e5 - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+    const r2 = await sb.from('horas_dia').select('nombre,fecha,horas').gte('fecha', d2).gt('horas', 10).order('fecha', { ascending: false });
+    if (!r2.error) setDia(r2.data || []);
+  })(); }, [rol]);
   const mostrarLocal = admin && driveVieja === true;
-  if (!a.length && !mostrarLocal) return null;
+  if (!a.length && !mostrarLocal && !exceso.length && !dia.length) return null;
   return (<div className="aviso">
+    {dia.map((x, i) => <Link key={'d' + i} href="/horas" className="aviso-i late">⚠️ {x.nombre} suma {Number(x.horas).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} h el {x.fecha.slice(8, 10) + '/' + x.fecha.slice(5, 7)} (más de 10 h en el día). Revisa que las horas estén bien repartidas entre tareas.</Link>)}
+    {exceso.map((x, i) => <Link key={i} href="/horas" className="aviso-i late">⚠️ {x.nombre} supera las 45 h semanales (semana del {x.semana.slice(8, 10) + '/' + x.semana.slice(5, 7)}: {Number(x.horas).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} h). No se puede pasar de 45 h.</Link>)}
     {mostrarLocal && <Link href="/copia" className="aviso-i late">⚠️ La copia automática en Google Drive tiene más de 3 días o ha fallado. Pulsa aquí para ver el estado y descargar una copia a mano.</Link>}
     {a.length > 0 && <div className="aviso-t">🔔 {a.length === 1 ? 'Trabajo previsto por planificar' : a.length + ' trabajos previstos por planificar'}</div>}
     {a.slice(0, 4).map(r => <Link key={r.id} href="/previstos" className={'aviso-i' + (r.d < 0 ? ' late' : '')}><b>{r.clientes?.nombre}</b>{r.servicios?.nombre ? ' · ' + r.servicios.nombre : ''} — {r.d < 0 ? 'empezaba hace ' + (-r.d) + ' día(s)' : r.d === 0 ? 'empieza HOY' : r.d === 1 ? 'empieza mañana' : 'empieza en ' + r.d + ' días'}{r.nota ? ' · ' + r.nota : ''}</Link>)}
